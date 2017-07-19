@@ -1,0 +1,47 @@
+{
+  "name": "react-hash-router",
+  "version": "0.0.1",
+  "description": "An hash-based router for React",
+  "files": [
+    "Router.js",
+    "Route.js",
+    "Link.js",
+    "index.js"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lin2jie2/react-hash-router.git"
+  },
+  "keywords": [
+    "react",
+    "router",
+    "hash"
+  ],
+  "author": "lin2jie2 <lin2jie2@gmail.com>",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/lin2jie2/react-hash-router/issues"
+  },
+  "homepage": "https://github.com/lin2jie2/react-hash-router#readme",
+  "dependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^7.1.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-1": "^6.24.1",
+    "react": "^15.6.1",
+    "prop-types": "^15.5.10"
+  },
+  "babel": {
+    "presets": [
+      "react"
+    ],
+    "plugins": [
+      "transform-class-properties"
+    ]
+  }
+}
