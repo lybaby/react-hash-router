@@ -5,33 +5,37 @@ export default class Link extends React.Component {
 	constructor(...args) {
 		var _temp;
 
-		return _temp = super(...args), this.buildURL = to => {
+		return _temp = super(...args), this.click = () => {
+			this.link.click();
+		}, this.buildURL = to => {
 			if (to.indexOf('/') === 0) {
 				return to;
 			} else {
-				const hash = location.hash || '';
+				const hash = location.hash ? location.hash.slice(1) : '';
 				const p = hash.split('/');
 				p.pop();
 				to.split('/').forEach(d => {
 					if (d === '..') {
 						p.pop();
-					} else if (d !== '.' && d !== '') {
+					} else if (d !== '.') {
 						p.push(d);
 					}
 				});
-				return p.join('/');
+				return p.join('/').replace(/\/{2,}/g, '/');
+			}
+		}, this.jumpTo = to => {
+			if (to) {
+				if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
+					window.open(to, '_self');
+				} else {
+					location.hash = this.buildURL(to);
+				}
 			}
 		}, this.handleClick = async ev => {
+			ev.persist();
 			await this.props.onClick(ev);
-			const to = this.props.to;
-			if (!ev.defaultPrevented) {
-				if (to) {
-					if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
-						window.open(to, '_self');
-					} else {
-						location.hash = this.buildURL(to);
-					}
-				}
+			if (!ev.isDefaultPrevented()) {
+				this.jumpTo(this.props.to);
 			}
 		}, _temp;
 	}
@@ -45,7 +49,10 @@ export default class Link extends React.Component {
 				className: className,
 				style: style,
 				title: title,
-				onClick: this.handleClick
+				onClick: this.handleClick,
+				ref: ref => {
+					this.link = ref;
+				}
 			},
 			children
 		);
