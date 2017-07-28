@@ -20,23 +20,49 @@ export default class Link extends React.Component {
 		onClick: () => {},
 	}
 
-	render() {
-		const { title, to, className, style, children, onClick } = this.props
-		let link = null
-		if (to) {
-			if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
-				link = to
-			}
-			else {
-				link = `#${to}`
+	buildURL = to => {
+		if (to.indexOf('/') === 0) {
+			return to
+		}
+		else {
+			const hash = location.hash || ''
+			const p = hash.split('/')
+			p.pop()
+			to.split('/').forEach(d => {
+				if (d === '..') {
+					p.pop()
+				}
+				else if (d !== '.' && d !== '') {
+					p.push(d)
+				}
+			})
+			return p.join('/')
+		}
+	}
+
+	handleClick = async ev => {
+		await this.props.onClick(ev)
+		const to = this.props.to
+		if (!ev.defaultPrevented) {
+			if (to) {
+				if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
+					window.open(to, '_self')
+				}
+				else {
+					location.hash = this.buildURL(to)
+				}
 			}
 		}
+	}
+
+	render() {
+		const { title, className, style, children } = this.props
+
 		return <a
-			title={title}
-			href={link}
 			className={className}
 			style={style}
-			onClick={onClick}
+			title={title}
+			onClick={this.handleClick}
 		>
 			{children}
 		</a>
