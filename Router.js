@@ -14,6 +14,10 @@ var _propTypes = require('prop-types');
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
+var _NotFound = require('./NotFound');
+
+var _NotFound2 = _interopRequireDefault(_NotFound);
+
 var _Route = require('./Route');
 
 var _Route2 = _interopRequireDefault(_Route);
@@ -55,7 +59,11 @@ var Router = function (_React$Component) {
 			    args = _this$parseURL.args,
 			    params = _this$parseURL.params;
 
+			var found = false;
 			_this.routes.forEach(function (route) {
+				if (found) {
+					return;
+				}
 				var Component = route.Component,
 				    path = route.path,
 				    rule = route.rule,
@@ -79,8 +87,21 @@ var Router = function (_React$Component) {
 					var pages = Object.assign({}, _this.state.pages);
 					pages[url] = page;
 					_this.setState({ pages: pages, url: url });
+					found = true;
 				}
 			});
+			if (!found) {
+				var page = {
+					Component: _NotFound2.default,
+					match: {},
+					params: params,
+					pathname: pathname,
+					args: args
+				};
+				var pages = Object.assign({}, _this.state.pages);
+				pages[url] = page;
+				_this.setState({ pages: pages, url: url });
+			}
 		};
 
 		_this.parseURL = function (url) {
@@ -207,7 +228,7 @@ var Router = function (_React$Component) {
 					    params = page.params;
 
 					var context = { url: url, pathname: pathname, args: args, match: match, params: params, observer: this.observer, navigateTo: _URL2.default };
-					return _react2.default.createElement(Component, { context: context });
+					return _react2.default.createElement(Component, { context: context, active: true });
 				}
 				return null;
 			}
@@ -222,7 +243,7 @@ var Router = function (_React$Component) {
 					    pathname = _state$pages$url.pathname,
 					    args = _state$pages$url.args;
 
-					var context = { url: url, pathname: pathname, args: args, match: match, params: params };
+					var context = { url: url, pathname: pathname, args: args, match: match, params: params, observer: _this3.observer, navigateTo: _URL2.default };
 					var active = url === _this3.state.url;
 					return _react2.default.createElement(
 						'div',

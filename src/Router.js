@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
+import NotFound from './NotFound'
 import Route from './Route'
 import Observer from './Observer'
 import navigateTo from './URL'
@@ -66,7 +67,11 @@ export default class Router extends React.Component {
 
 	parseHash = hash => {
 		const { url, pathname, args, params } = this.parseURL(hash)
+		let found = false
 		this.routes.forEach(route => {
+			if (found) {
+				return
+			}
 			const { Component, path, rule, variables } = route
 			const matches = pathname.match(rule)
 			if ((path === pathname) || matches) {
@@ -86,8 +91,21 @@ export default class Router extends React.Component {
 				const pages = Object.assign({}, this.state.pages)
 				pages[url] = page
 				this.setState({ pages, url })
+				found = true
 			}
 		})
+		if (!found) {
+			const page = {
+				Component: NotFound,
+				match: {},
+				params,
+				pathname,
+				args,
+			}
+			const pages = Object.assign({}, this.state.pages)
+			pages[url] = page
+			this.setState({ pages, url })
+		}
 	}
 
 	parseURL = url => {
@@ -165,7 +183,7 @@ export default class Router extends React.Component {
 			if (page) {
 				const { Component, url, pathname, args, match, params } = page
 				const context = { url, pathname, args, match, params, observer: this.observer, navigateTo }
-				return <Component context={context} />
+				return <Component context={context} active />
 			}
 			return null
 		}
@@ -173,7 +191,7 @@ export default class Router extends React.Component {
 			{
 				Object.keys(this.state.pages).map(url => {
 					const { Component, match, params, pathname, args } = this.state.pages[url]
-					const context = { url, pathname, args, match, params }
+					const context = { url, pathname, args, match, params, observer: this.observer, navigateTo }
 					const active = url === this.state.url
 					return <div className={`route${active ? ' active' : ''}`} key={url}>
 						<Component context={context} active={active} />

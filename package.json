@@ -6,6 +6,7 @@
     "Router.js",
     "Route.js",
     "Link.js",
+    "NotFound.js",
     "URL.js",
     "Observer.js",
     "index.js"
