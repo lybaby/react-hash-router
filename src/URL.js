@@ -1,5 +1,5 @@
 
-buildURL = to => {
+function buildURL(to) {
 	if (to.indexOf('/') === 0) {
 		return to
 	}
@@ -19,7 +19,7 @@ buildURL = to => {
 	}
 }
 
-navigateTo = to => {
+function navigateTo(to) {
 	if (to) {
 		if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
 			window.open(to, '_self')

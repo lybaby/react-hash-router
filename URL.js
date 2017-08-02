@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-buildURL = function buildURL(to) {
+function buildURL(to) {
 	if (to.indexOf('/') === 0) {
 		return to;
 	} else {
@@ -20,16 +20,16 @@ buildURL = function buildURL(to) {
 		});
 		return p.join('/').replace(/\/{2,}/g, '/');
 	}
-};
+}
 
-navigateTo = function navigateTo(to) {
+function navigateTo(to) {
 	if (to) {
 		if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
 			window.open(to, '_self');
 		} else {
-			location.hash = undefined.buildURL(to);
+			location.hash = this.buildURL(to);
 		}
 	}
-};
+}
 
 exports.default = navigateTo;
