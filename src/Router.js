@@ -2,6 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 import Route from './Route'
+import Observer from './Observer'
+import navigateTo from './URL'
 
 export default class Router extends React.Component {
 	static propTypes = {
@@ -26,6 +28,8 @@ export default class Router extends React.Component {
 	}
 
 	componentWillMount() {
+		this.observer = new Observer()
+
 		if ('onhashchange' in window) {
 			window.addEventListener('hashchange', this.hashChange, false)
 		}
@@ -160,7 +164,7 @@ export default class Router extends React.Component {
 			const page = this.state.pages[this.state.url]
 			if (page) {
 				const { Component, url, pathname, args, match, params } = page
-				const context = { url, pathname, args, match, params }
+				const context = { url, pathname, args, match, params, observer: this.observer, navigateTo }
 				return <Component context={context} />
 			}
 			return null

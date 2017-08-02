@@ -1,11 +1,13 @@
 {
   "name": "react-hash-router",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "An hash-based router for React",
   "files": [
     "Router.js",
     "Route.js",
     "Link.js",
+    "URL.js",
+    "Observer.js",
     "index.js"
   ],
   "main": "index.js",

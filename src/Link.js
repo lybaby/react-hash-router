@@ -1,6 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
+import navigateTo from './URL'
+
 export default class Link extends React.Component {
 	static propTypes = {
 		title: PropTypes.string,
@@ -24,42 +26,42 @@ export default class Link extends React.Component {
 		this.link.click()
 	}
 
-	buildURL = to => {
-		if (to.indexOf('/') === 0) {
-			return to
-		}
-		else {
-			const hash = location.hash ? location.hash.slice(1) : ''
-			const p = hash.split('/')
-			p.pop()
-			to.split('/').forEach(d => {
-				if (d === '..') {
-					p.pop()
-				}
-				else if (d !== '.') {
-					p.push(d)
-				}
-			})
-			return p.join('/').replace(/\/{2,}/g, '/')
-		}
-	}
+	// buildURL = to => {
+	// 	if (to.indexOf('/') === 0) {
+	// 		return to
+	// 	}
+	// 	else {
+	// 		const hash = location.hash ? location.hash.slice(1) : ''
+	// 		const p = hash.split('/')
+	// 		p.pop()
+	// 		to.split('/').forEach(d => {
+	// 			if (d === '..') {
+	// 				p.pop()
+	// 			}
+	// 			else if (d !== '.') {
+	// 				p.push(d)
+	// 			}
+	// 		})
+	// 		return p.join('/').replace(/\/{2,}/g, '/')
+	// 	}
+	// }
 
-	jumpTo = to => {
-		if (to) {
-			if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
-				window.open(to, '_self')
-			}
-			else {
-				location.hash = this.buildURL(to)
-			}
-		}
-	}
+	// jumpTo = to => {
+	// 	if (to) {
+	// 		if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
+	// 			window.open(to, '_self')
+	// 		}
+	// 		else {
+	// 			location.hash = this.buildURL(to)
+	// 		}
+	// 	}
+	// }
 
 	handleClick = async ev => {
 		ev.persist()
 		await this.props.onClick(ev)
 		if (!ev.isDefaultPrevented()) {
-			this.jumpTo(this.props.to)
+			navigateTo(this.props.to)
 		}
 	}
 
