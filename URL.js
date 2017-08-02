@@ -27,7 +27,7 @@ function navigateTo(to) {
 		if (/^(tel|sms|mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
 			window.open(to, '_self');
 		} else {
-			location.hash = this.buildURL(to);
+			location.hash = buildURL(to);
 		}
 	}
 }

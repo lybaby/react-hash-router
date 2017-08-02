@@ -25,7 +25,7 @@ function navigateTo(to) {
 			window.open(to, '_self')
 		}
 		else {
-			location.hash = this.buildURL(to)
+			location.hash = buildURL(to)
 		}
 	}
 }
