@@ -129,6 +129,9 @@ export default class Router extends React.Component {
 
 	parseValue = value => {
 		if (/^([0-9]|[1-9][0-9]+)$/.test(value)) {
+			if (value.length > 11) {
+				return value
+			}
 			return parseInt(value, 10)
 		}
 		else if (/^\d*\.\d+$/.test(value)) {

@@ -124,6 +124,9 @@ var Router = function (_React$Component) {
 
 		_this.parseValue = function (value) {
 			if (/^([0-9]|[1-9][0-9]+)$/.test(value)) {
+				if (value.length > 11) {
+					return value;
+				}
 				return parseInt(value, 10);
 			} else if (/^\d*\.\d+$/.test(value)) {
 				return parseFloat(value);
