@@ -320,7 +320,7 @@ var Router = function (_React$Component) {
 					var cls = cur === -1 ? 'prev' : cur === index ? 'active' : 'next';
 					return _react2.default.createElement(
 						'div',
-						{ className: 'route ' + cls, key: uri },
+						{ className: 'route ' + cls, style: { zIndex: index + 1 }, key: uri },
 						_react2.default.createElement(Component, { context: context, active: active })
 					);
 				})

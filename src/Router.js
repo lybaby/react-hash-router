@@ -262,7 +262,7 @@ export default class Router extends React.Component {
 						}, 16)
 					}
 					const cls = cur === -1 ? 'prev' : (cur === index ? 'active' : 'next')
-					return <div className={`route ${cls}`} key={uri}>
+					return <div className={`route ${cls}`} style={{ zIndex: index + 1 }} key={uri}>
 						<Component context={context} active={active} />
 					</div>
 				})
