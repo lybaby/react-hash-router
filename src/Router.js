@@ -50,7 +50,6 @@ export default class Router extends React.Component {
 		const cache = JSON.parse(sessionStorage.getItem('history') || 'null')
 		if (cache && cache.history && cache.uri && cache.current >= 0) {
 			cache.history.forEach(uri => {
-				// componentWillMount()
 				this.state = Object.assign(this.state, this.parseHash(uri))
 			})
 			this.state.history = cache.history
@@ -60,13 +59,16 @@ export default class Router extends React.Component {
 
 		const hash = window.location.hash
 		const p = hash.indexOf('#')
-		this.setState(this.parseHash(p === -1 ? '' : hash.slice(p + 1)), () => {
-			if (this.state.history.length === 0) {
-				this.setState({ current: 0, history: [this.state.uri] }, () => {
-					sessionStorage.setItem('history', JSON.stringify({ current: 0, uri: this.state.uri, history: [this.state.uri] }))
-				})
-			}
-		})
+		this.state = Object.assign({}, this.state, this.parseHash(p === -1 ? '' : hash.slice(p + 1)))
+		if (this.state.history.length === 0) {
+			this.state.current = 0;
+			this.state.history = [this.state.uri]
+			sessionStorage.setItem('history', JSON.stringify({ current: 0, uri: this.state.uri, history: [this.state.uri] }))
+		}
+	}
+
+	componentDidMount() {
+		this.animated()
 	}
 
 	componentWillUnmount() {
@@ -76,6 +78,33 @@ export default class Router extends React.Component {
 		else {
 			clearTimeout(this.timer)
 		}
+	}
+
+	componentDidUpdate() {
+		this.first = false
+		this.animated()
+	}
+
+	first = true
+
+	animated = () => {
+		const { current, uri, history } = this.state
+		this.observer.publish('ROUTE_CHANGE', { current, uri, history })
+
+		setTimeout(() => {
+			const routes = this.router.querySelectorAll('.route')
+			for (let i = 0; i < routes.length; i += 1) {
+				if (i < current) {
+					routes[i].className = 'route pass'
+				}
+				else if (current === i) {
+					routes[i].className = 'route active'
+				}
+				else {
+					routes[i].className = 'route next'
+				}
+			}
+		}, 8)	// 120hz
 	}
 
 	hashChange = ev => {
@@ -249,7 +278,7 @@ export default class Router extends React.Component {
 		}
 
 		let cur = -1
-		return <div className="router">
+		return <div className="router" ref={ref => { this.router = ref }}>
 			{
 				history.map((uri, index) => {
 					const { Component, match, params, pathname, args } = this.state.pages[uri]
@@ -257,12 +286,13 @@ export default class Router extends React.Component {
 					const active = uri === this.state.uri
 					if (active) {
 						cur = index
-						setTimeout(() => {
-							this.observer.publish('ROUTE_CHANGE', { current: index, uri, history })
-						}, 16)
 					}
-					const cls = cur === -1 ? 'prev' : (cur === index ? 'active' : 'next')
-					return <div className={`route ${cls}`} style={{ zIndex: index + 1 }} key={uri}>
+					const cls = cur === -1 ? 'prev' : (cur === index ? (this.first ? 'active' : 'next') : 'next')
+					return <div
+						className={`route ${cls}`}
+						data-uri={uri}
+						key={uri}
+					>
 						<Component context={context} active={active} />
 					</div>
 				})
