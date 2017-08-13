@@ -5,6 +5,7 @@ import navigateTo from './URL'
 
 export default class Link extends React.Component {
 	static propTypes = {
+		id: PropTypes.string,
 		title: PropTypes.string,
 		to: PropTypes.string,
 		className: PropTypes.string,
@@ -14,6 +15,7 @@ export default class Link extends React.Component {
 	}
 
 	static defaultProps = {
+		id: null,
 		title: '',
 		to: '',
 		className: '',
@@ -35,9 +37,10 @@ export default class Link extends React.Component {
 	}
 
 	render() {
-		const { title, className, style, children } = this.props
+		const { title, id, className, style, children } = this.props
 
 		return <a
+			id={id}
 			className={className}
 			style={style}
 			title={title}

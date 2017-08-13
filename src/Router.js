@@ -11,59 +11,58 @@ export default class Router extends React.Component {
 		path: PropTypes.string,
 		children: PropTypes.arrayOf(Route, Router, PropTypes.func).isRequired,
 		cache: PropTypes.bool,
+		notFound: PropTypes.func,
+		duration: PropTypes.number,
 	}
 
 	static defaultProps = {
 		path: '',
 		cache: false,
+		notFound: NotFound,
+		duration: 400,
 	}
 
 	constructor(props) {
 		super(props)
 		this.state = {
-			pages: {},
-			uri: '',
-			current: -1,
-			history: [],
+			current: [],
+			next: [],
+			end: [],
 		}
 		this.routes = []
+		this.pages = {}
+		this.history = []
+		this.current = -1
+
 		this.parseRoutes(props.children, props.path || '')
 	}
 
 	componentWillMount() {
 		this.observer = new Observer()
 
-		if ('onhashchange' in window) {
-			window.addEventListener('hashchange', this.hashChange, false)
-		}
-		else {
-			let oldURL = window.location.href
-			this.timer = setInterval(() => {
-				const newURL = window.location.href
-				if (oldURL !== newURL) {
-					oldURL = newURL
-					this.hashChange({ oldURL, newURL })
-				}
-			}, 16)
-		}
+		window.addEventListener('hashchange', this.hashChange, false)
 
+		// history
 		const cache = JSON.parse(sessionStorage.getItem('history') || 'null')
-		if (cache && cache.history && cache.uri && cache.current >= 0) {
+		if (cache && Array.isArray(cache.history) && (typeof cache.current === 'number') && cache.history.length > 0 && cache.history.length > cache.current) {
 			cache.history.forEach(uri => {
-				this.state = Object.assign(this.state, this.parseHash(uri))
+				this.parseHash(uri)
 			})
-			this.state.history = cache.history
-			this.state.current = cache.current
-			this.state.uri = cache.uri
+			this.history = cache.history
+			this.current = cache.current
 		}
 
-		const hash = window.location.hash
-		const p = hash.indexOf('#')
-		this.state = Object.assign({}, this.state, this.parseHash(p === -1 ? '' : hash.slice(p + 1)))
-		if (this.state.history.length === 0) {
-			this.state.current = 0;
-			this.state.history = [this.state.uri]
-			sessionStorage.setItem('history', JSON.stringify({ current: 0, uri: this.state.uri, history: [this.state.uri] }))
+		// current
+		const uri = this.getHashURI(window.location.href)
+		this.parseHash(uri)
+
+		this.state.current = [{ uri, className: 'current', index: this.current === -1 ? 0 : this.current }]
+
+		// first
+		if (this.history.length === 0) {
+			this.current = 0;
+			this.history = [uri]
+			sessionStorage.setItem('history', JSON.stringify({ current: 0, history: [uri] }))
 		}
 	}
 
@@ -72,76 +71,83 @@ export default class Router extends React.Component {
 	}
 
 	componentWillUnmount() {
-		if ('onhashchange' in window) {
-			window.removeEventListener('hashChange', this.hashChange)
-		}
-		else {
-			clearTimeout(this.timer)
-		}
+		window.removeEventListener('hashChange', this.hashChange)
 	}
 
 	componentDidUpdate() {
-		this.first = false
 		this.animated()
 	}
 
-	first = true
-
 	animated = () => {
-		const { current, uri, history } = this.state
+		const { current, history } = this
+		const uri = this.history[this.current]
 		this.observer.publish('ROUTE_CHANGE', { current, uri, history })
 
-		setTimeout(() => {
-			const routes = this.router.querySelectorAll('.route')
-			for (let i = 0; i < routes.length; i += 1) {
-				if (i < current) {
-					routes[i].className = 'route pass'
-				}
-				else if (current === i) {
-					routes[i].className = 'route active'
-				}
-				else {
-					routes[i].className = 'route next'
-				}
-			}
-		}, 8)	// 120hz
+		const { next, end } = this.state
+		if (next.length > 0) {
+			const timeout = next.length > 1 ? 16 : this.props.duration
+			setTimeout(() => {
+				this.setState({ current: next, next: end, end: [] })
+			}, timeout)
+		}
+	}
+
+	getHashURI = url => {
+		const p = url.indexOf('#')
+		return p === -1 ? '' : url.slice(p + 1)
 	}
 
 	hashChange = ev => {
-		const p = ev.newURL.indexOf('#')
-		const hash = p === -1 ? '' : ev.newURL.slice(p + 1)
-		const state = this.parseHash(hash)
-		
-		state.history = this.state.history
-		state.current = this.state.current
-		const prev = state.history.length > 1 ? state.history[state.current - 1] : null
-		const next = state.history[state.current + 1]
-		// back
-		if (state.uri === prev) {
-			state.current = this.state.current - 1
+		const oldURI = this.getHashURI(ev.oldURL)
+		const newURI = this.getHashURI(ev.newURL)
+		if (!(newURI in this.pages)) {
+			this.parseHash(newURI)
 		}
-		// forward
-		else if (state.uri === next) {
-			state.current += 1
+		
+		const uri = this.history[this.current]
+		const prev = this.current > 0 ? this.history[this.current - 1] : null
+		const next = this.current + 1 < this.history.length ? this.history[this.current + 1] : null
+		// push
+		if (oldURI === uri && newURI === next) {
+			const index = this.current
+			this.current += 1
+			this.setState({
+				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
+				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
+				end: [{ uri: newURI, className: 'current', index: index + 1 }],
+			})
+		}
+		// pop
+		else if (newURI === prev && oldURI === uri) {
+			const index = this.current
+			this.current -= 1
+			this.setState({
+				current: [{ uri: newURI, className: 'prev', index: index - 1 }, { uri: oldURI, className: 'current', index }],
+				next: [{ uri: newURI, className: 'current', index: index - 1 }, { uri: oldURI, className: 'next', index }],
+				end: [{ uri: newURI, className: 'current', index }],
+			})
 		}
 		// goto
 		else {
-			while (state.current + 1 < state.history.length) {
-				state.history.pop()
+			const index = this.current
+			while (this.current + 1 < this.history.length) {
+				this.history.pop()
 			}
-			state.history.push(state.uri)
-			state.current = state.history.length - 1
+			this.history.push(newURI)
+			this.current = this.history.length - 1
+			this.setState({
+				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
+				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
+				end: [{ uri: newURI, className: 'current', index: index + 1 }],
+			})
 		}
-		this.setState(state, () => {
-			const { current, uri, history } = state
-			sessionStorage.setItem('history', JSON.stringify({ current, uri: uri, history }))
-		})
+		sessionStorage.setItem('history', JSON.stringify({ current: this.current, history: this.history }))
 	}
 
 	parseHash = hash => {
-		const { uri, pathname, args, params } = this.parseURI(hash)
+		const { uri, pathname, query, args } = this.parseURI(hash)
 		let found = false
-		let state = {}
+		// let state = {}
 		this.routes.forEach(route => {
 			if (found) {
 				return
@@ -157,51 +163,46 @@ export default class Router extends React.Component {
 				}
 				const page = {
 					Component,
-					match,
-					params,
 					uri,
-					pathname,
+					path: pathname,
+					query,
+					match,
 					args,
 				}
-				const pages = Object.assign({}, this.state.pages)
-				pages[uri] = page
-				state = { pages, uri }
+				this.pages[uri] = page
 				found = true
 			}
 		})
 		if (!found) {
 			const page = {
-				Component: NotFound,
-				match: {},
-				params,
+				Component: this.props.otFound,
 				uri,
-				pathname,
+				path: pathname,
+				query,
+				match: {},
 				args,
 			}
-			const pages = Object.assign({}, this.state.pages)
-			pages[uri] = page
-			state = { pages, uri }
+			this.pages[uri] = page
 		}
-		return state
 	}
 
 	parseURI = uri => {
 		const q = uri.indexOf('?')
 		const pathname = q === -1 ? uri : uri.slice(0, q)
-		const args = q === -1 ? '' : uri.slice(q + 1)
-		const params = {}
-		if (args.length > 0) {
-			args.split('&').forEach(item => {
+		const query = q === -1 ? '' : uri.slice(q + 1)
+		const args = {}
+		if (query.length > 0) {
+			query.split('&').forEach(item => {
 				const p = item.indexOf('=')
 				if (p === -1) {
-					params[item] = null
+					args[item] = null
 				}
 				else {
-					params[item.slice(0, p)] = this.parseValue(unescape(item.slice(p + 1)))
+					args[item.slice(0, p)] = this.parseValue(unescape(item.slice(p + 1)))
 				}
 			})
 		}
-		return { uri, pathname, args, params }
+		return { uri, pathname, query, args }
 	}
 
 	parseValue = value => {
@@ -258,42 +259,18 @@ export default class Router extends React.Component {
 	}
 
 	render() {
-		const { history } = this.state
-
-		if (!this.props.cache) {
-			const page = this.state.pages[this.state.uri]
-			if (page) {
-				const { Component, uri, pathname, args, match, params } = page
-				const context = { uri, pathname, args, match, params, observer: this.observer, navigateTo }
-				history.forEach((u, index) => {
-					if (uri === u) {
-						setTimeout(() => {
-							this.observer.publish('ROUTE_CHANGE', { current: index, uri, history })
-						}, 16)
-					}
-				})
-				return <Component context={context} active />
-			}
-			return null
-		}
-
-		let cur = -1
-		return <div className="router" ref={ref => { this.router = ref }}>
+		return <div className="router">
 			{
-				history.map((uri, index) => {
-					const { Component, match, params, pathname, args } = this.state.pages[uri]
-					const context = { uri, pathname, args, match, params, observer: this.observer, navigateTo }
-					const active = uri === this.state.uri
-					if (active) {
-						cur = index
-					}
-					const cls = cur === -1 ? 'prev' : (cur === index ? (this.first ? 'active' : 'next') : 'next')
+				this.state.current.map(item => {
+					const { uri, className, index } = item
+					const { Component, path, query, match, args } = this.pages[uri]
+					const context = { index, uri, path, query, match, args, observer: this.observer, navigateTo }
 					return <div
-						className={`route ${cls}`}
+						className={`route ${className}`}
 						data-uri={uri}
 						key={uri}
 					>
-						<Component context={context} active={active} />
+						<Component context={context} active={className === 'current'} />
 					</div>
 				})
 			}

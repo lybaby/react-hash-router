@@ -46,73 +46,86 @@ var Router = function (_React$Component) {
 
 		var _this = _possibleConstructorReturn(this, (Router.__proto__ || Object.getPrototypeOf(Router)).call(this, props));
 
-		_this.first = true;
-
 		_this.animated = function () {
-			var _this$state = _this.state,
-			    current = _this$state.current,
-			    uri = _this$state.uri,
-			    history = _this$state.history;
+			var current = _this.current,
+			    history = _this.history;
 
+			var uri = _this.history[_this.current];
 			_this.observer.publish('ROUTE_CHANGE', { current: current, uri: uri, history: history });
 
-			setTimeout(function () {
-				var routes = _this.router.querySelectorAll('.route');
-				for (var i = 0; i < routes.length; i += 1) {
-					if (i < current) {
-						routes[i].className = 'route pass';
-					} else if (current === i) {
-						routes[i].className = 'route active';
-					} else {
-						routes[i].className = 'route next';
-					}
-				}
-			}, 8); // 120hz
+			var _this$state = _this.state,
+			    next = _this$state.next,
+			    end = _this$state.end;
+
+			if (next.length > 0) {
+				var timeout = next.length > 1 ? 16 : _this.props.duration;
+				setTimeout(function () {
+					_this.setState({ current: next, next: end, end: [] });
+				}, timeout);
+			}
+		};
+
+		_this.getHashURI = function (url) {
+			var p = url.indexOf('#');
+			return p === -1 ? '' : url.slice(p + 1);
 		};
 
 		_this.hashChange = function (ev) {
-			var p = ev.newURL.indexOf('#');
-			var hash = p === -1 ? '' : ev.newURL.slice(p + 1);
-			var state = _this.parseHash(hash);
-
-			state.history = _this.state.history;
-			state.current = _this.state.current;
-			var prev = state.history.length > 1 ? state.history[state.current - 1] : null;
-			var next = state.history[state.current + 1];
-			// back
-			if (state.uri === prev) {
-				state.current = _this.state.current - 1;
+			var oldURI = _this.getHashURI(ev.oldURL);
+			var newURI = _this.getHashURI(ev.newURL);
+			if (!(newURI in _this.pages)) {
+				_this.parseHash(newURI);
 			}
-			// forward
-			else if (state.uri === next) {
-					state.current += 1;
+
+			var uri = _this.history[_this.current];
+			var prev = _this.current > 0 ? _this.history[_this.current - 1] : null;
+			var next = _this.current + 1 < _this.history.length ? _this.history[_this.current + 1] : null;
+			// push
+			if (oldURI === uri && newURI === next) {
+				var index = _this.current;
+				_this.current += 1;
+				_this.setState({
+					current: [{ uri: oldURI, className: 'current', index: index }, { uri: newURI, className: 'next', index: index + 1 }],
+					next: [{ uri: oldURI, className: 'prev', index: index }, { uri: newURI, className: 'current', index: index + 1 }],
+					end: [{ uri: newURI, className: 'current', index: index + 1 }]
+				});
+			}
+			// pop
+			else if (newURI === prev && oldURI === uri) {
+					var _index = _this.current;
+					_this.current -= 1;
+					_this.setState({
+						current: [{ uri: newURI, className: 'prev', index: _index - 1 }, { uri: oldURI, className: 'current', index: _index }],
+						next: [{ uri: newURI, className: 'current', index: _index - 1 }, { uri: oldURI, className: 'next', index: _index }],
+						end: [{ uri: newURI, className: 'current', index: _index }]
+					});
 				}
 				// goto
 				else {
-						while (state.current + 1 < state.history.length) {
-							state.history.pop();
+						var _index2 = _this.current;
+						while (_this.current + 1 < _this.history.length) {
+							_this.history.pop();
 						}
-						state.history.push(state.uri);
-						state.current = state.history.length - 1;
+						_this.history.push(newURI);
+						_this.current = _this.history.length - 1;
+						_this.setState({
+							current: [{ uri: oldURI, className: 'current', index: _index2 }, { uri: newURI, className: 'next', index: _index2 + 1 }],
+							next: [{ uri: oldURI, className: 'prev', index: _index2 }, { uri: newURI, className: 'current', index: _index2 + 1 }],
+							end: [{ uri: newURI, className: 'current', index: _index2 + 1 }]
+						});
 					}
-			_this.setState(state, function () {
-				var current = state.current,
-				    uri = state.uri,
-				    history = state.history;
-
-				sessionStorage.setItem('history', JSON.stringify({ current: current, uri: uri, history: history }));
-			});
+			sessionStorage.setItem('history', JSON.stringify({ current: _this.current, history: _this.history }));
 		};
 
 		_this.parseHash = function (hash) {
 			var _this$parseURI = _this.parseURI(hash),
 			    uri = _this$parseURI.uri,
 			    pathname = _this$parseURI.pathname,
-			    args = _this$parseURI.args,
-			    params = _this$parseURI.params;
+			    query = _this$parseURI.query,
+			    args = _this$parseURI.args;
 
 			var found = false;
-			var state = {};
+			// let state = {}
 			_this.routes.forEach(function (route) {
 				if (found) {
 					return;
@@ -132,50 +145,45 @@ var Router = function (_React$Component) {
 					}
 					var page = {
 						Component: Component,
-						match: match,
-						params: params,
 						uri: uri,
-						pathname: pathname,
+						path: pathname,
+						query: query,
+						match: match,
 						args: args
 					};
-					var pages = Object.assign({}, _this.state.pages);
-					pages[uri] = page;
-					state = { pages: pages, uri: uri };
+					_this.pages[uri] = page;
 					found = true;
 				}
 			});
 			if (!found) {
 				var page = {
-					Component: _NotFound2.default,
-					match: {},
-					params: params,
+					Component: _this.props.otFound,
 					uri: uri,
-					pathname: pathname,
+					path: pathname,
+					query: query,
+					match: {},
 					args: args
 				};
-				var pages = Object.assign({}, _this.state.pages);
-				pages[uri] = page;
-				state = { pages: pages, uri: uri };
+				_this.pages[uri] = page;
 			}
-			return state;
 		};
 
 		_this.parseURI = function (uri) {
 			var q = uri.indexOf('?');
 			var pathname = q === -1 ? uri : uri.slice(0, q);
-			var args = q === -1 ? '' : uri.slice(q + 1);
-			var params = {};
-			if (args.length > 0) {
-				args.split('&').forEach(function (item) {
+			var query = q === -1 ? '' : uri.slice(q + 1);
+			var args = {};
+			if (query.length > 0) {
+				query.split('&').forEach(function (item) {
 					var p = item.indexOf('=');
 					if (p === -1) {
-						params[item] = null;
+						args[item] = null;
 					} else {
-						params[item.slice(0, p)] = _this.parseValue(unescape(item.slice(p + 1)));
+						args[item.slice(0, p)] = _this.parseValue(unescape(item.slice(p + 1)));
 					}
 				});
 			}
-			return { uri: uri, pathname: pathname, args: args, params: params };
+			return { uri: uri, pathname: pathname, query: query, args: args };
 		};
 
 		_this.parseValue = function (value) {
@@ -230,12 +238,15 @@ var Router = function (_React$Component) {
 		};
 
 		_this.state = {
-			pages: {},
-			uri: '',
-			current: -1,
-			history: []
+			current: [],
+			next: [],
+			end: []
 		};
 		_this.routes = [];
+		_this.pages = {};
+		_this.history = [];
+		_this.current = -1;
+
 		_this.parseRoutes(props.children, props.path || '');
 		return _this;
 	}
@@ -247,36 +258,29 @@ var Router = function (_React$Component) {
 
 			this.observer = new _Observer2.default();
 
-			if ('onhashchange' in window) {
-				window.addEventListener('hashchange', this.hashChange, false);
-			} else {
-				var oldURL = window.location.href;
-				this.timer = setInterval(function () {
-					var newURL = window.location.href;
-					if (oldURL !== newURL) {
-						oldURL = newURL;
-						_this2.hashChange({ oldURL: oldURL, newURL: newURL });
-					}
-				}, 16);
-			}
+			window.addEventListener('hashchange', this.hashChange, false);
 
+			// history
 			var cache = JSON.parse(sessionStorage.getItem('history') || 'null');
-			if (cache && cache.history && cache.uri && cache.current >= 0) {
+			if (cache && Array.isArray(cache.history) && typeof cache.current === 'number' && cache.history.length > 0 && cache.history.length > cache.current) {
 				cache.history.forEach(function (uri) {
-					_this2.state = Object.assign(_this2.state, _this2.parseHash(uri));
+					_this2.parseHash(uri);
 				});
-				this.state.history = cache.history;
-				this.state.current = cache.current;
-				this.state.uri = cache.uri;
+				this.history = cache.history;
+				this.current = cache.current;
 			}
 
-			var hash = window.location.hash;
-			var p = hash.indexOf('#');
-			this.state = Object.assign({}, this.state, this.parseHash(p === -1 ? '' : hash.slice(p + 1)));
-			if (this.state.history.length === 0) {
-				this.state.current = 0;
-				this.state.history = [this.state.uri];
-				sessionStorage.setItem('history', JSON.stringify({ current: 0, uri: this.state.uri, history: [this.state.uri] }));
+			// current
+			var uri = this.getHashURI(window.location.href);
+			this.parseHash(uri);
+
+			this.state.current = [{ uri: uri, className: 'current', index: this.current === -1 ? 0 : this.current }];
+
+			// first
+			if (this.history.length === 0) {
+				this.current = 0;
+				this.history = [uri];
+				sessionStorage.setItem('history', JSON.stringify({ current: 0, history: [uri] }));
 			}
 		}
 	}, {
@@ -287,16 +291,11 @@ var Router = function (_React$Component) {
 	}, {
 		key: 'componentWillUnmount',
 		value: function componentWillUnmount() {
-			if ('onhashchange' in window) {
-				window.removeEventListener('hashChange', this.hashChange);
-			} else {
-				clearTimeout(this.timer);
-			}
+			window.removeEventListener('hashChange', this.hashChange);
 		}
 	}, {
 		key: 'componentDidUpdate',
 		value: function componentDidUpdate() {
-			this.first = false;
 			this.animated();
 		}
 	}, {
@@ -304,60 +303,29 @@ var Router = function (_React$Component) {
 		value: function render() {
 			var _this3 = this;
 
-			var history = this.state.history;
-
-
-			if (!this.props.cache) {
-				var page = this.state.pages[this.state.uri];
-				if (page) {
-					var Component = page.Component,
-					    uri = page.uri,
-					    pathname = page.pathname,
-					    args = page.args,
-					    match = page.match,
-					    params = page.params;
-
-					var context = { uri: uri, pathname: pathname, args: args, match: match, params: params, observer: this.observer, navigateTo: _URL2.default };
-					history.forEach(function (u, index) {
-						if (uri === u) {
-							setTimeout(function () {
-								_this3.observer.publish('ROUTE_CHANGE', { current: index, uri: uri, history: history });
-							}, 16);
-						}
-					});
-					return _react2.default.createElement(Component, { context: context, active: true });
-				}
-				return null;
-			}
-
-			var cur = -1;
 			return _react2.default.createElement(
 				'div',
-				{ className: 'router', ref: function ref(_ref) {
-						_this3.router = _ref;
-					} },
-				history.map(function (uri, index) {
-					var _state$pages$uri = _this3.state.pages[uri],
-					    Component = _state$pages$uri.Component,
-					    match = _state$pages$uri.match,
-					    params = _state$pages$uri.params,
-					    pathname = _state$pages$uri.pathname,
-					    args = _state$pages$uri.args;
+				{ className: 'router' },
+				this.state.current.map(function (item) {
+					var uri = item.uri,
+					    className = item.className,
+					    index = item.index;
+					var _pages$uri = _this3.pages[uri],
+					    Component = _pages$uri.Component,
+					    path = _pages$uri.path,
+					    query = _pages$uri.query,
+					    match = _pages$uri.match,
+					    args = _pages$uri.args;
 
-					var context = { uri: uri, pathname: pathname, args: args, match: match, params: params, observer: _this3.observer, navigateTo: _URL2.default };
-					var active = uri === _this3.state.uri;
-					if (active) {
-						cur = index;
-					}
-					var cls = cur === -1 ? 'prev' : cur === index ? _this3.first ? 'active' : 'next' : 'next';
+					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, observer: _this3.observer, navigateTo: _URL2.default };
 					return _react2.default.createElement(
 						'div',
 						{
-							className: 'route ' + cls,
+							className: 'route ' + className,
 							'data-uri': uri,
 							key: uri
 						},
-						_react2.default.createElement(Component, { context: context, active: active })
+						_react2.default.createElement(Component, { context: context, active: className === 'current' })
 					);
 				})
 			);
@@ -370,10 +338,14 @@ var Router = function (_React$Component) {
 Router.propTypes = {
 	path: _propTypes2.default.string,
 	children: _propTypes2.default.arrayOf(_Route2.default, Router, _propTypes2.default.func).isRequired,
-	cache: _propTypes2.default.bool
+	cache: _propTypes2.default.bool,
+	notFound: _propTypes2.default.func,
+	duration: _propTypes2.default.number
 };
 Router.defaultProps = {
 	path: '',
-	cache: false
+	cache: false,
+	notFound: _NotFound2.default,
+	duration: 400
 };
 exports.default = Router;

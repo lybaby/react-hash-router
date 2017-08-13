@@ -85,6 +85,7 @@ var Link = function (_React$Component) {
 
 			var _props = this.props,
 			    title = _props.title,
+			    id = _props.id,
 			    className = _props.className,
 			    style = _props.style,
 			    children = _props.children;
@@ -93,6 +94,7 @@ var Link = function (_React$Component) {
 			return _react2.default.createElement(
 				'a',
 				{
+					id: id,
 					className: className,
 					style: style,
 					title: title,
@@ -110,6 +112,7 @@ var Link = function (_React$Component) {
 }(_react2.default.Component);
 
 Link.propTypes = {
+	id: _propTypes2.default.string,
 	title: _propTypes2.default.string,
 	to: _propTypes2.default.string,
 	className: _propTypes2.default.string,
@@ -118,6 +121,7 @@ Link.propTypes = {
 	onClick: _propTypes2.default.func
 };
 Link.defaultProps = {
+	id: null,
 	title: '',
 	to: '',
 	className: '',
