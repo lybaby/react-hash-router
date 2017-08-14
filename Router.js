@@ -157,7 +157,7 @@ var Router = function (_React$Component) {
 			});
 			if (!found) {
 				var page = {
-					Component: _this.props.otFound,
+					Component: _this.props.notFound,
 					uri: uri,
 					path: pathname,
 					query: query,

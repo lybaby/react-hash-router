@@ -175,7 +175,7 @@ export default class Router extends React.Component {
 		})
 		if (!found) {
 			const page = {
-				Component: this.props.otFound,
+				Component: this.props.notFound,
 				uri,
 				path: pathname,
 				query,

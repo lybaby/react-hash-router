@@ -1,3 +1,7 @@
 import React from 'react'
 
-export default () => (<p>404 Not Found</p>)
+export default (props) => (<div>
+	<p>Not Found</p>
+	<hr />
+	<p>{props.uri}</p>
+</div>)
