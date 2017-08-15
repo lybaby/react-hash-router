@@ -4,10 +4,11 @@ function buildURL(to) {
 		return to
 	}
 	else {
-		const hash = location.hash ? location.hash.slice(1) : ''
+		const hash = location.hash ? location.hash.slice(1).split('?', 1)[0] : ''
 		const p = hash.split('/')
 		p.pop()
-		to.split('/').forEach(d => {
+		const [path, ...args] = to.split('?')
+		path.split('/').forEach(d => {
 			if (d === '..') {
 				p.pop()
 			}
@@ -15,7 +16,7 @@ function buildURL(to) {
 				p.push(d)
 			}
 		})
-		return p.join('/').replace(/\/{2,}/g, '/')
+		return p.join('/').replace(/\/{2,}/g, '/') + (args.length > 0 ? `?${args.join('?')}` : '')
 	}
 }
 
