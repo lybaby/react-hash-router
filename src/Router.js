@@ -13,6 +13,7 @@ export default class Router extends React.Component {
 		cache: PropTypes.bool,
 		notFound: PropTypes.func,
 		duration: PropTypes.number,
+		useHistoryState: PropTypes.bool,
 	}
 
 	static defaultProps = {
@@ -20,6 +21,7 @@ export default class Router extends React.Component {
 		cache: false,
 		notFound: NotFound,
 		duration: 400,
+		useHistoryState: true,
 	}
 
 	constructor(props) {
@@ -40,7 +42,7 @@ export default class Router extends React.Component {
 	componentWillMount() {
 		this.observer = new Observer()
 
-		window.addEventListener('hashchange', this.hashChange, false)
+		window.addEventListener('hashchange', this.props.useHistoryState ? this.hashChange : this.hashChangeOld, false)
 
 		// history
 		const cache = JSON.parse(sessionStorage.getItem('history') || 'null')
@@ -53,6 +55,11 @@ export default class Router extends React.Component {
 		}
 
 		// current
+		if (this.props.useHistoryState) {
+			if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
+				history.replaceState({ PAGE: history.length - 1 }, '')
+			}
+		}
 		const uri = this.getHashURI(window.location.href)
 		this.parseHash(uri)
 
@@ -71,7 +78,7 @@ export default class Router extends React.Component {
 	}
 
 	componentWillUnmount() {
-		window.removeEventListener('hashChange', this.hashChange)
+		window.removeEventListener('hashChange', this.props.useHistoryState ? this.hashChange : this.hashChangeOld)
 	}
 
 	componentDidUpdate() {
@@ -98,6 +105,61 @@ export default class Router extends React.Component {
 	}
 
 	hashChange = ev => {
+		if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
+			history.replaceState({ PAGE: history.length - 1 }, '')
+		}
+		const page = history.state.PAGE
+		const oldURI = this.getHashURI(ev.oldURL)
+		const newURI = this.getHashURI(ev.newURL)
+		if (!(newURI in this.pages)) {
+			this.parseHash(newURI)
+		}
+		
+		// back or forward
+		if (this.history.length === history.length) {
+			// page, current => forward
+			if (this.current > page) {
+				const index = this.current
+				this.current = page
+				this.setState({
+					current: [{ uri: newURI, className: 'prev', index: index - 1 }, { uri: oldURI, className: 'current', index }],
+					next: [{ uri: newURI, className: 'current', index: index - 1 }, { uri: oldURI, className: 'next', index }],
+					end: [{ uri: newURI, className: 'current', index }],
+				})
+			}
+			// current, page => back
+			else if (this.current < page) {
+				const index = this.current
+				this.current = page
+				this.setState({
+					current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
+					next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
+					end: [{ uri: newURI, className: 'current', index: index + 1 }],
+				})
+			}
+			// page = current => reflush
+			else {
+				//
+			}
+		}
+		// push
+		else {
+			const index = this.current
+			while (this.current + 1 < this.history.length) {
+				this.history.pop()
+			}
+			this.history.push(newURI)
+			this.current = this.history.length - 1
+			this.setState({
+				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
+				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
+				end: [{ uri: newURI, className: 'current', index: index + 1 }],
+			})
+		}
+		sessionStorage.setItem('history', JSON.stringify({ current: this.current, history: this.history }))
+	}
+
+	hashChangeOld = ev => {
 		const oldURI = this.getHashURI(ev.oldURL)
 		const newURI = this.getHashURI(ev.newURL)
 		if (!(newURI in this.pages)) {
@@ -107,7 +169,7 @@ export default class Router extends React.Component {
 		const uri = this.history[this.current]
 		const prev = this.current > 0 ? this.history[this.current - 1] : null
 		const next = this.current + 1 < this.history.length ? this.history[this.current + 1] : null
-		// push
+		// forward
 		if (oldURI === uri && newURI === next) {
 			const index = this.current
 			this.current += 1
@@ -117,7 +179,7 @@ export default class Router extends React.Component {
 				end: [{ uri: newURI, className: 'current', index: index + 1 }],
 			})
 		}
-		// pop
+		// back
 		else if (newURI === prev && oldURI === uri) {
 			const index = this.current
 			this.current -= 1
@@ -143,7 +205,7 @@ export default class Router extends React.Component {
 		}
 		sessionStorage.setItem('history', JSON.stringify({ current: this.current, history: this.history }))
 	}
-
+	
 	parseHash = hash => {
 		const { uri, pathname, query, args } = this.parseURI(hash)
 		let found = false
