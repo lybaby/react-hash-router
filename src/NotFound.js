@@ -1,7 +1,7 @@
 import React from 'react'
 
 export default (props) => (<div>
-	<p>Not Found</p>
+	<p>Page Not Found</p>
 	<hr />
 	<p>{props.uri}</p>
 </div>)

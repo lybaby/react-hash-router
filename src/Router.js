@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import NotFound from './NotFound'
 import Route from './Route'
 import Observer from './Observer'
-import navigateTo from './URL'
+import { navigateTo, buildURL } from './URL'
 
 export default class Router extends React.Component {
 	static propTypes = {
@@ -114,8 +114,8 @@ export default class Router extends React.Component {
 		if (!(newURI in this.pages)) {
 			this.parseHash(newURI)
 		}
-		
-		// back or forward
+
+		// backward or forward
 		if (this.history.length === history.length) {
 			// page, current => forward
 			if (this.current > page) {
@@ -127,7 +127,7 @@ export default class Router extends React.Component {
 					end: [{ uri: newURI, className: 'current', index }],
 				})
 			}
-			// current, page => back
+			// current, page => backward
 			else if (this.current < page) {
 				const index = this.current
 				this.current = page
@@ -165,7 +165,7 @@ export default class Router extends React.Component {
 		if (!(newURI in this.pages)) {
 			this.parseHash(newURI)
 		}
-		
+
 		const uri = this.history[this.current]
 		const prev = this.current > 0 ? this.history[this.current - 1] : null
 		const next = this.current + 1 < this.history.length ? this.history[this.current + 1] : null
@@ -205,7 +205,7 @@ export default class Router extends React.Component {
 		}
 		sessionStorage.setItem('history', JSON.stringify({ current: this.current, history: this.history }))
 	}
-	
+
 	parseHash = hash => {
 		const { uri, pathname, query, args } = this.parseURI(hash)
 		let found = false
@@ -318,6 +318,26 @@ export default class Router extends React.Component {
 				}
 			}
 		})
+	}
+
+	backTo = (to, fromStart = false) => {
+		const uri = buildURL(to)
+		if (fromStart) {
+			for (let i = 0; i < this.current; i += 1) {
+				if (this.history[i] === uri) {
+					history.go(i - this.current)
+					break
+				}
+			}
+		}
+		else {
+			for (let i = this.current - 1; i >= 0; i -= 1) {
+				if (this.history[i] === uri) {
+					history.go(i - this.current)
+					break
+				}
+			}
+		}
 	}
 
 	render() {

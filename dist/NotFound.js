@@ -17,7 +17,7 @@ exports.default = function (props) {
 		_react2.default.createElement(
 			'p',
 			null,
-			'Not Found'
+			'Page Not Found'
 		),
 		_react2.default.createElement('hr', null),
 		_react2.default.createElement(

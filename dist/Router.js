@@ -28,8 +28,6 @@ var _Observer2 = _interopRequireDefault(_Observer);
 
 var _URL = require('./URL');
 
-var _URL2 = _interopRequireDefault(_URL);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -81,7 +79,7 @@ var Router = function (_React$Component) {
 				_this.parseHash(newURI);
 			}
 
-			// back or forward
+			// backward or forward
 			if (_this.history.length === history.length) {
 				// page, current => forward
 				if (_this.current > page) {
@@ -93,7 +91,7 @@ var Router = function (_React$Component) {
 						end: [{ uri: newURI, className: 'current', index: index }]
 					});
 				}
-				// current, page => back
+				// current, page => backward
 				else if (_this.current < page) {
 						var _index = _this.current;
 						_this.current = page;
@@ -292,6 +290,27 @@ var Router = function (_React$Component) {
 			});
 		};
 
+		_this.backTo = function (to) {
+			var fromStart = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+			var uri = (0, _URL.buildURL)(to);
+			if (fromStart) {
+				for (var i = 0; i < _this.current; i += 1) {
+					if (_this.history[i] === uri) {
+						history.go(i - _this.current);
+						break;
+					}
+				}
+			} else {
+				for (var _i = _this.current - 1; _i >= 0; _i -= 1) {
+					if (_this.history[_i] === uri) {
+						history.go(_i - _this.current);
+						break;
+					}
+				}
+			}
+		};
+
 		_this.state = {
 			current: [],
 			next: [],
@@ -377,7 +396,7 @@ var Router = function (_React$Component) {
 					    match = _pages$uri.match,
 					    args = _pages$uri.args;
 
-					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, observer: _this3.observer, navigateTo: _URL2.default };
+					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, observer: _this3.observer, navigateTo: _URL.navigateTo };
 					return _react2.default.createElement(
 						'div',
 						{
