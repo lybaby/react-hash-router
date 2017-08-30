@@ -346,7 +346,7 @@ export default class Router extends React.Component {
 				this.state.current.map(item => {
 					const { uri, className, index } = item
 					const { Component, path, query, match, args } = this.pages[uri]
-					const context = { index, uri, path, query, match, args, observer: this.observer, navigateTo }
+					const context = { index, uri, path, query, match, args, observer: this.observer, navigateTo, backTo: this.backTo }
 					return <div
 						className={`route ${className}`}
 						data-uri={uri}

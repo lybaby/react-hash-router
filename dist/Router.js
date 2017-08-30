@@ -396,7 +396,7 @@ var Router = function (_React$Component) {
 					    match = _pages$uri.match,
 					    args = _pages$uri.args;
 
-					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, observer: _this3.observer, navigateTo: _URL.navigateTo };
+					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, observer: _this3.observer, navigateTo: _URL.navigateTo, backTo: _this3.backTo };
 					return _react2.default.createElement(
 						'div',
 						{
