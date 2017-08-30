@@ -8,7 +8,8 @@ An hash-based router for React
 
 # 使用
 
-	// index.js
+index.js
+
 	import React from 'react'
 	import { Router, Route, Bundle } from 'react-hash-router'
 
@@ -26,7 +27,8 @@ An hash-based router for React
 		<Route component={Detail} path=":id" />
 	</Router>)
 
-	// Home.js
+Home.js
+
 	import React from 'react'
 	import PropTypes from 'prop-types'
 	import { Link } from 'react-hash-router'
@@ -45,7 +47,8 @@ An hash-based router for React
 		}
 	}
 
-	// Detail.js
+Detail.js
+
 	import React from 'react'
 	import PropTypes from 'prop-types'
 	import { Link } from 'react-hash-router'
