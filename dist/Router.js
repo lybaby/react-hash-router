@@ -28,6 +28,8 @@ var _Observer2 = _interopRequireDefault(_Observer);
 
 var _URL = require('./URL');
 
+var _URL2 = _interopRequireDefault(_URL);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -282,7 +284,7 @@ var Router = function (_React$Component) {
 				} else if (r.type === Router) {
 					_this.parseRoutes(r.props.children, '' + prefix + (r.props.path || ''));
 				} else if (typeof r.type === 'function') {
-					var result = r.type();
+					var result = r.type(r.props);
 					if (result && result.type === Router) {
 						_this.parseRoutes(result.props.children, '' + prefix + (result.props.path || ''));
 					}
@@ -396,7 +398,7 @@ var Router = function (_React$Component) {
 					    match = _pages$uri.match,
 					    args = _pages$uri.args;
 
-					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, observer: _this3.observer, navigateTo: _URL.navigateTo, backTo: _this3.backTo };
+					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, observer: _this3.observer, navigateTo: _URL2.default, backTo: _this3.backTo };
 					return _react2.default.createElement(
 						'div',
 						{

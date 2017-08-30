@@ -312,7 +312,7 @@ export default class Router extends React.Component {
 				this.parseRoutes(r.props.children, `${prefix}${r.props.path || ''}`)
 			}
 			else if (typeof r.type === 'function') {
-				const result = r.type()
+				const result = r.type(r.props)
 				if (result && result.type === Router) {
 					this.parseRoutes(result.props.children, `${prefix}${result.props.path || ''}`)
 				}
