@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import NotFound from './NotFound'
 import Route from './Route'
 import Observer from './Observer'
-import { navigateTo, buildURL } from './URL'
+import navigateTo, { buildURL } from './URL'
 
 export default class Router extends React.Component {
 	static propTypes = {

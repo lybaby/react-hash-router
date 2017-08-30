@@ -32,3 +32,4 @@ function navigateTo(to) {
 }
 
 export default navigateTo
+export { navigateTo, buildURL }

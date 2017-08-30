@@ -41,3 +41,5 @@ function navigateTo(to) {
 }
 
 exports.default = navigateTo;
+exports.navigateTo = navigateTo;
+exports.buildURL = buildURL;
