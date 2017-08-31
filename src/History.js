@@ -93,7 +93,13 @@ export default class History {
 	}
 
 	buildURI = to => {
-		if (to.indexOf('/') === 0) {
+		if (/^[a-z]+:\/\//i.test(to)) {
+			return to
+		}
+		if (/^\/\//i.test(to)) {
+			return location.protocol + to
+		}
+		else if (to.indexOf('/') === 0) {
 			return to
 		}
 		else {
@@ -153,7 +159,14 @@ export default class History {
 			next: [],
 			end: [],
 		})
-		window.history.replaceState(window.history.state, "", `#${uri}`)
+		console.log('uri = ', uri)
+		// 安全问题
+		if (/^[a-z]+:\/\//i.test(uri)) {
+			window.location.href = uri
+		}
+		else {
+			window.history.replaceState(window.history.state, '', `#${uri}`)
+		}
 		this.cacheHistory()
 	}
 

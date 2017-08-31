@@ -84,7 +84,12 @@ var History = function History(observer) {
 	};
 
 	this.buildURI = function (to) {
-		if (to.indexOf('/') === 0) {
+		if (/^[a-z]+:\/\//i.test(to)) {
+			return to;
+		}
+		if (/^\/\//i.test(to)) {
+			return location.protocol + to;
+		} else if (to.indexOf('/') === 0) {
 			return to;
 		} else {
 			var hash = location.hash ? location.hash.slice(1).split('?', 1)[0] : '';
@@ -147,7 +152,13 @@ var History = function History(observer) {
 			next: [],
 			end: []
 		});
-		window.history.replaceState(window.history.state, "", '#' + uri);
+		console.log('uri = ', uri);
+		// 安全问题
+		if (/^[a-z]+:\/\//i.test(uri)) {
+			window.location.href = uri;
+		} else {
+			window.history.replaceState(window.history.state, '', '#' + uri);
+		}
 		_this.cacheHistory();
 	};
 

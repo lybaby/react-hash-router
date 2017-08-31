@@ -50,6 +50,7 @@ var Redirect = function (_React$Component) {
 				}
 			});
 			this.redirectURI = query === null ? path : path + '?' + query;
+			console.log(this);
 		}
 	}, {
 		key: 'componentDidMount',

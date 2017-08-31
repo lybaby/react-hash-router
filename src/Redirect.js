@@ -24,6 +24,7 @@ export default class Redirect extends React.Component {
 			}
 		})
 		this.redirectURI = query === null ? path : `${path}?${query}`
+		console.log(this)
 	}
 
 	componentDidMount() {
