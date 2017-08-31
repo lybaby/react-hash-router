@@ -3,8 +3,11 @@ import PropTypes from 'prop-types'
 
 import NotFound from './NotFound'
 import Route from './Route'
+import Redirect from './Redirect'
 import Observer from './Observer'
-import navigateTo, { buildURL } from './URL'
+import History from './History'
+
+const observer = new Observer()
 
 export default class Router extends React.Component {
 	static propTypes = {
@@ -33,52 +36,24 @@ export default class Router extends React.Component {
 		}
 		this.routes = []
 		this.pages = {}
-		this.history = []
-		this.current = -1
 
 		this.parseRoutes(props.children, props.path || '')
 	}
 
 	componentWillMount() {
-		this.observer = new Observer()
-
-		window.addEventListener('hashchange', this.props.useHistoryState ? this.hashChange : this.hashChangeOld, false)
-
-		// history
-		const cache = JSON.parse(sessionStorage.getItem('history') || 'null')
-		if (cache && Array.isArray(cache.history) && (typeof cache.current === 'number') && cache.history.length > 0 && cache.history.length > cache.current) {
-			cache.history.forEach(uri => {
-				this.parseHash(uri)
-			})
-			this.history = cache.history
-			this.current = cache.current
-		}
-
-		// current
-		if (this.props.useHistoryState) {
-			if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
-				history.replaceState({ PAGE: history.length - 1 }, '')
-			}
-		}
-		const uri = this.getHashURI(window.location.href)
-		this.parseHash(uri)
-
-		this.state.current = [{ uri, className: 'current', index: this.current === -1 ? 0 : this.current }]
-
-		// first
-		if (this.history.length === 0) {
-			this.current = 0;
-			this.history = [uri]
-			sessionStorage.setItem('history', JSON.stringify({ current: 0, history: [uri] }))
-		}
+		observer.subscribe('ROUTER_CHANGE', routes => {
+			Object.keys(routes).forEach(step => routes[step].forEach(item => {
+				if (!(item.uri in this.pages)) {
+					this.parseRoute(item.uri)
+				}
+			}))
+			this.setState(routes)
+		})
+		this.history = new History(observer)
 	}
 
 	componentDidMount() {
 		this.animated()
-	}
-
-	componentWillUnmount() {
-		window.removeEventListener('hashChange', this.props.useHistoryState ? this.hashChange : this.hashChangeOld)
 	}
 
 	componentDidUpdate() {
@@ -86,10 +61,6 @@ export default class Router extends React.Component {
 	}
 
 	animated = () => {
-		const { current, history } = this
-		const uri = this.history[this.current]
-		this.observer.publish('ROUTE_CHANGE', { current, uri, history })
-
 		const { next, end } = this.state
 		if (next.length > 0) {
 			const timeout = next.length > 1 ? 16 : this.props.duration
@@ -99,122 +70,14 @@ export default class Router extends React.Component {
 		}
 	}
 
-	getHashURI = url => {
-		const p = url.indexOf('#')
-		return p === -1 ? '' : url.slice(p + 1)
-	}
-
-	hashChange = ev => {
-		if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
-			history.replaceState({ PAGE: history.length - 1 }, '')
-		}
-		const page = history.state.PAGE
-		const oldURI = this.getHashURI(ev.oldURL)
-		const newURI = this.getHashURI(ev.newURL)
-		if (!(newURI in this.pages)) {
-			this.parseHash(newURI)
-		}
-
-		// backward or forward
-		if (this.history.length === history.length) {
-			// page, current => forward
-			if (this.current > page) {
-				const index = this.current
-				this.current = page
-				this.setState({
-					current: [{ uri: newURI, className: 'prev', index: index - 1 }, { uri: oldURI, className: 'current', index }],
-					next: [{ uri: newURI, className: 'current', index: index - 1 }, { uri: oldURI, className: 'next', index }],
-					end: [{ uri: newURI, className: 'current', index }],
-				})
-			}
-			// current, page => backward
-			else if (this.current < page) {
-				const index = this.current
-				this.current = page
-				this.setState({
-					current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
-					next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
-					end: [{ uri: newURI, className: 'current', index: index + 1 }],
-				})
-			}
-			// page = current => reflush
-			else {
-				//
-			}
-		}
-		// push
-		else {
-			const index = this.current
-			while (this.current + 1 < this.history.length) {
-				this.history.pop()
-			}
-			this.history.push(newURI)
-			this.current = this.history.length - 1
-			this.setState({
-				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
-				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
-				end: [{ uri: newURI, className: 'current', index: index + 1 }],
-			})
-		}
-		sessionStorage.setItem('history', JSON.stringify({ current: this.current, history: this.history }))
-	}
-
-	hashChangeOld = ev => {
-		const oldURI = this.getHashURI(ev.oldURL)
-		const newURI = this.getHashURI(ev.newURL)
-		if (!(newURI in this.pages)) {
-			this.parseHash(newURI)
-		}
-
-		const uri = this.history[this.current]
-		const prev = this.current > 0 ? this.history[this.current - 1] : null
-		const next = this.current + 1 < this.history.length ? this.history[this.current + 1] : null
-		// forward
-		if (oldURI === uri && newURI === next) {
-			const index = this.current
-			this.current += 1
-			this.setState({
-				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
-				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
-				end: [{ uri: newURI, className: 'current', index: index + 1 }],
-			})
-		}
-		// back
-		else if (newURI === prev && oldURI === uri) {
-			const index = this.current
-			this.current -= 1
-			this.setState({
-				current: [{ uri: newURI, className: 'prev', index: index - 1 }, { uri: oldURI, className: 'current', index }],
-				next: [{ uri: newURI, className: 'current', index: index - 1 }, { uri: oldURI, className: 'next', index }],
-				end: [{ uri: newURI, className: 'current', index }],
-			})
-		}
-		// goto
-		else {
-			const index = this.current
-			while (this.current + 1 < this.history.length) {
-				this.history.pop()
-			}
-			this.history.push(newURI)
-			this.current = this.history.length - 1
-			this.setState({
-				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
-				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
-				end: [{ uri: newURI, className: 'current', index: index + 1 }],
-			})
-		}
-		sessionStorage.setItem('history', JSON.stringify({ current: this.current, history: this.history }))
-	}
-
-	parseHash = hash => {
-		const { uri, pathname, query, args } = this.parseURI(hash)
+	parseRoute = requestURI => {
+		const { uri, pathname, query, args } = this.parseURI(requestURI)
 		let found = false
-		// let state = {}
 		this.routes.forEach(route => {
 			if (found) {
 				return
 			}
-			const { Component, path, rule, variables } = route
+			const { Component, path, rule, variables, props } = route
 			const matches = pathname.match(rule)
 			if ((path === pathname) || matches) {
 				const match = {}
@@ -230,6 +93,7 @@ export default class Router extends React.Component {
 					query,
 					match,
 					args,
+					props,
 				}
 				this.pages[uri] = page
 				found = true
@@ -251,18 +115,21 @@ export default class Router extends React.Component {
 	parseURI = uri => {
 		const q = uri.indexOf('?')
 		const pathname = q === -1 ? uri : uri.slice(0, q)
-		const query = q === -1 ? '' : uri.slice(q + 1)
-		const args = {}
-		if (query.length > 0) {
-			query.split('&').forEach(item => {
-				const p = item.indexOf('=')
-				if (p === -1) {
-					args[item] = null
-				}
-				else {
-					args[item.slice(0, p)] = this.parseValue(unescape(item.slice(p + 1)))
-				}
-			})
+		const query = q === -1 ? null : uri.slice(q + 1)
+		let args = null
+		if (q !== -1) {
+			args = {}
+			if (query.length > 0) {
+				query.split('&').forEach(item => {
+					const p = item.indexOf('=')
+					if (p === -1) {
+						args[item] = null
+					}
+					else {
+						args[item.slice(0, p)] = this.parseValue(unescape(item.slice(p + 1)))
+					}
+				})
+			}
 		}
 		return { uri, pathname, query, args }
 	}
@@ -306,13 +173,29 @@ export default class Router extends React.Component {
 					path: `${prefix}${path}`,
 					rule: new RegExp(`^${rule}$`),
 					variables,
+					props: r.props,
+				})
+			}
+			else if (r.type === Redirect) {
+				const { path } = r.props
+				const variables = []
+				const rule = `${prefix}${path}`.replace(/\\/g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
+					variables.push(m.slice(1))
+					return '([a-zA-Z0-9]+)'
+				})
+				this.routes.push({
+					Component: r.type,
+					path: `${prefix}${path}`,
+					rule: new RegExp(`^${rule}$`),
+					variables,
+					props: r.props,
 				})
 			}
 			else if (r.type === Router) {
 				this.parseRoutes(r.props.children, `${prefix}${r.props.path || ''}`)
 			}
 			else if (typeof r.type === 'function') {
-				const result = r.type(r.props)
+				const result = r.type()
 				if (result && result.type === Router) {
 					this.parseRoutes(result.props.children, `${prefix}${result.props.path || ''}`)
 				}
@@ -320,33 +203,13 @@ export default class Router extends React.Component {
 		})
 	}
 
-	backTo = (to, fromStart = false) => {
-		const uri = buildURL(to)
-		if (fromStart) {
-			for (let i = 0; i < this.current; i += 1) {
-				if (this.history[i] === uri) {
-					history.go(i - this.current)
-					break
-				}
-			}
-		}
-		else {
-			for (let i = this.current - 1; i >= 0; i -= 1) {
-				if (this.history[i] === uri) {
-					history.go(i - this.current)
-					break
-				}
-			}
-		}
-	}
-
 	render() {
 		return <div className="router">
 			{
 				this.state.current.map(item => {
 					const { uri, className, index } = item
-					const { Component, path, query, match, args } = this.pages[uri]
-					const context = { index, uri, path, query, match, args, observer: this.observer, navigateTo, backTo: this.backTo }
+					const { Component, path, query, match, args, props } = this.pages[uri]
+					const context = { index, uri, path, query, match, args, props, observer, navigateTo: this.history.navigateTo, backTo: this.history.backTo, replaceWith: this.history.replaceWith }
 					return <div
 						className={`route ${className}`}
 						data-uri={uri}
