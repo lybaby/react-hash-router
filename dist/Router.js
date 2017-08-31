@@ -26,13 +26,7 @@ var _Redirect = require('./Redirect');
 
 var _Redirect2 = _interopRequireDefault(_Redirect);
 
-var _Observer = require('./Observer');
-
-var _Observer2 = _interopRequireDefault(_Observer);
-
-var _History = require('./History');
-
-var _History2 = _interopRequireDefault(_History);
+var _h = require('./h');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -41,8 +35,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var observer = new _Observer2.default();
 
 var Router = function (_React$Component) {
 	_inherits(Router, _React$Component);
@@ -71,7 +63,7 @@ var Router = function (_React$Component) {
 		value: function componentWillMount() {
 			var _this2 = this;
 
-			observer.subscribe('ROUTER_CHANGE', function (routes) {
+			_h.observer.subscribe('ROUTER_CHANGE', function (routes) {
 				Object.keys(routes).forEach(function (step) {
 					return routes[step].forEach(function (item) {
 						if (!(item.uri in _this2.pages)) {
@@ -81,7 +73,8 @@ var Router = function (_React$Component) {
 				});
 				_this2.setState(routes);
 			});
-			this.history = new _History2.default(observer);
+
+			_h.history.init();
 		}
 	}, {
 		key: 'componentDidMount',
@@ -113,7 +106,7 @@ var Router = function (_React$Component) {
 					    args = _pages$uri.args,
 					    props = _pages$uri.props;
 
-					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, props: props, observer: observer, navigateTo: _this3.history.navigateTo, backTo: _this3.history.backTo, replaceWith: _this3.history.replaceWith };
+					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, props: props, observer: _h.observer, navigateTo: _h.history.navigateTo, backTo: _h.history.backTo, replaceWith: _h.history.replaceWith };
 					return _react2.default.createElement(
 						'div',
 						{

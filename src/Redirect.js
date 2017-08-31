@@ -1,6 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
+import { history } from './h'
+
 export default class Redirect extends React.Component {
 	static propTypes = {
 		context: PropTypes.shape(),
@@ -11,7 +13,7 @@ export default class Redirect extends React.Component {
 	}
 
 	componentWillMount() {
-		const { match, query, props, replaceWith, navigateTo } = this.props.context
+		const { match, query, props } = this.props.context
 		const path = props.to.replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
 			const variable = m.slice(1)
 			if (variable in match) {
@@ -25,12 +27,12 @@ export default class Redirect extends React.Component {
 	}
 
 	componentDidMount() {
-		const { props, replaceWith, navigateTo } = this.props.context
+		const { props } = this.props.context
 		if (props.replace) {
-			replaceWith(this.redirectURI)
+			history.replaceWith(this.redirectURI)
 		}
 		else {
-			navigateTo(this.redirectURI)
+			history.navigateTo(this.redirectURI)
 		}
 	}
 

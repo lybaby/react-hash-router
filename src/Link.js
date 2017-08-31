@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import navigateTo from './URL'
+import { history } from './h'
 
 export default class Link extends React.Component {
 	static propTypes = {
@@ -32,7 +32,7 @@ export default class Link extends React.Component {
 		ev.persist()
 		await this.props.onClick(ev)
 		if (!ev.isDefaultPrevented()) {
-			navigateTo(this.props.to)
+			history.navigateTo(this.props.to)
 		}
 	}
 

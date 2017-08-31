@@ -11,7 +11,8 @@
 	"src/NotFound.js",
 	"src/Observer.js",
 	"src/History.js",
-	"src/Bundle.js"
+	"src/Bundle.js",
+	"src/h.js"
   ],
   "main": "dist/index.js",
   "scripts": {

@@ -14,6 +14,8 @@ var _propTypes = require('prop-types');
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
+var _h = require('./h');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -37,9 +39,7 @@ var Redirect = function (_React$Component) {
 			var _props$context = this.props.context,
 			    match = _props$context.match,
 			    query = _props$context.query,
-			    props = _props$context.props,
-			    replaceWith = _props$context.replaceWith,
-			    navigateTo = _props$context.navigateTo;
+			    props = _props$context.props;
 
 			var path = props.to.replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
 				var variable = m.slice(1);
@@ -54,15 +54,12 @@ var Redirect = function (_React$Component) {
 	}, {
 		key: 'componentDidMount',
 		value: function componentDidMount() {
-			var _props$context2 = this.props.context,
-			    props = _props$context2.props,
-			    replaceWith = _props$context2.replaceWith,
-			    navigateTo = _props$context2.navigateTo;
+			var props = this.props.context.props;
 
 			if (props.replace) {
-				replaceWith(this.redirectURI);
+				_h.history.replaceWith(this.redirectURI);
 			} else {
-				navigateTo(this.redirectURI);
+				_h.history.navigateTo(this.redirectURI);
 			}
 		}
 	}, {

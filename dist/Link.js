@@ -18,9 +18,7 @@ var _propTypes = require('prop-types');
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _URL = require('./URL');
-
-var _URL2 = _interopRequireDefault(_URL);
+var _h = require('./h');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -61,7 +59,7 @@ var Link = function (_React$Component) {
 
 							case 3:
 								if (!ev.isDefaultPrevented()) {
-									(0, _URL2.default)(_this.props.to);
+									_h.history.navigateTo(_this.props.to);
 								}
 
 							case 4:

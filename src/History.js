@@ -5,8 +5,6 @@ export default class History {
 		this.current = -1
 		this.times = 0
 
-		window.addEventListener('hashchange', this.hashChange, false)
-
 		// history
 		this.restoreHistory()
 
@@ -22,6 +20,10 @@ export default class History {
 			this.current = this.history.length - 1
 			this.cacheHistory()
 		}
+	}
+
+	init = () => {
+		window.addEventListener('hashchange', this.hashChange, false)
 
 		this.emitRouteChange({
 			current: [{ uri: this.history[this.current], className: 'current', index: history.state.PAGE + 1 }],

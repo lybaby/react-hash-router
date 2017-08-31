@@ -4,10 +4,8 @@ import PropTypes from 'prop-types'
 import NotFound from './NotFound'
 import Route from './Route'
 import Redirect from './Redirect'
-import Observer from './Observer'
-import History from './History'
 
-const observer = new Observer()
+import { observer, history } from './h'
 
 export default class Router extends React.Component {
 	static propTypes = {
@@ -49,7 +47,8 @@ export default class Router extends React.Component {
 			}))
 			this.setState(routes)
 		})
-		this.history = new History(observer)
+
+		history.init()
 	}
 
 	componentDidMount() {
@@ -209,7 +208,7 @@ export default class Router extends React.Component {
 				this.state.current.map(item => {
 					const { uri, className, index } = item
 					const { Component, path, query, match, args, props } = this.pages[uri]
-					const context = { index, uri, path, query, match, args, props, observer, navigateTo: this.history.navigateTo, backTo: this.history.backTo, replaceWith: this.history.replaceWith }
+					const context = { index, uri, path, query, match, args, props, observer, navigateTo: history.navigateTo, backTo: history.backTo, replaceWith: history.replaceWith }
 					return <div
 						className={`route ${className}`}
 						data-uri={uri}

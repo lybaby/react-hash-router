@@ -13,6 +13,16 @@ var History = function History(observer) {
 
 	_classCallCheck(this, History);
 
+	this.init = function () {
+		window.addEventListener('hashchange', _this.hashChange, false);
+
+		_this.emitRouteChange({
+			current: [{ uri: _this.history[_this.current], className: 'current', index: history.state.PAGE + 1 }],
+			next: [],
+			end: []
+		});
+	};
+
 	this.hashChange = function (ev) {
 		var pushState = false;
 		if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
@@ -159,8 +169,6 @@ var History = function History(observer) {
 	this.current = -1;
 	this.times = 0;
 
-	window.addEventListener('hashchange', this.hashChange, false);
-
 	// history
 	this.restoreHistory();
 
@@ -176,12 +184,6 @@ var History = function History(observer) {
 		this.current = this.history.length - 1;
 		this.cacheHistory();
 	}
-
-	this.emitRouteChange({
-		current: [{ uri: this.history[this.current], className: 'current', index: history.state.PAGE + 1 }],
-		next: [],
-		end: []
-	});
 };
 
 exports.default = History;
