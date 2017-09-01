@@ -17,9 +17,9 @@ var History = function History(observer) {
 		window.addEventListener('hashchange', _this.hashChange, false);
 
 		_this.emitRouteChange({
-			current: [{ uri: _this.history[_this.current], className: 'current', index: history.state.PAGE + 1 }],
+			current: [{ uri: _this.history[_this.current], className: 'current', index: _this.current }],
 			next: [],
-			end: []
+			end: [{ uri: _this.history[_this.current], className: 'current', index: _this.current }]
 		});
 	};
 
@@ -39,11 +39,11 @@ var History = function History(observer) {
 				_this.history.pop();
 			}
 			_this.history.push(newURI);
-			_this.current = _this.history.length - 1;
+			_this.current = page;
 			_this.emitRouteChange({
-				current: [{ uri: oldURI, className: 'current', index: index }, { uri: newURI, className: 'next', index: index + 1 }],
-				next: [{ uri: oldURI, className: 'prev', index: index }, { uri: newURI, className: 'current', index: index + 1 }],
-				end: [{ uri: newURI, className: 'current', index: index + 1 }]
+				current: [{ uri: oldURI, className: 'current', index: index }, { uri: newURI, className: 'next', index: page }],
+				next: [{ uri: oldURI, className: 'prev', index: index }, { uri: newURI, className: 'current', index: page }],
+				end: [{ uri: newURI, className: 'current', index: page }]
 			});
 		}
 		// page, current => forward
@@ -51,9 +51,9 @@ var History = function History(observer) {
 				var _index = _this.current;
 				_this.current = page;
 				_this.emitRouteChange({
-					current: [{ uri: newURI, className: 'prev', index: _index - 1 }, { uri: oldURI, className: 'current', index: _index }],
-					next: [{ uri: newURI, className: 'current', index: _index - 1 }, { uri: oldURI, className: 'next', index: _index }],
-					end: [{ uri: newURI, className: 'current', index: _index }]
+					current: [{ uri: newURI, className: 'prev', index: page }, { uri: oldURI, className: 'current', index: _index }],
+					next: [{ uri: newURI, className: 'current', index: page }, { uri: oldURI, className: 'next', index: _index }],
+					end: [{ uri: newURI, className: 'current', index: page }]
 				});
 			}
 			// current, page => backward
@@ -61,9 +61,9 @@ var History = function History(observer) {
 					var _index2 = _this.current;
 					_this.current = page;
 					_this.emitRouteChange({
-						current: [{ uri: oldURI, className: 'current', index: _index2 }, { uri: newURI, className: 'next', index: _index2 + 1 }],
-						next: [{ uri: oldURI, className: 'prev', index: _index2 }, { uri: newURI, className: 'current', index: _index2 + 1 }],
-						end: [{ uri: newURI, className: 'current', index: _index2 + 1 }]
+						current: [{ uri: oldURI, className: 'current', index: _index2 }, { uri: newURI, className: 'next', index: page }],
+						next: [{ uri: oldURI, className: 'prev', index: _index2 }, { uri: newURI, className: 'current', index: page }],
+						end: [{ uri: newURI, className: 'current', index: page }]
 					});
 				}
 				// refresh

@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _react = require('react');
@@ -77,14 +79,11 @@ var Router = function (_React$Component) {
 			_h.history.init();
 		}
 	}, {
-		key: 'componentDidMount',
-		value: function componentDidMount() {
-			this.animated();
-		}
-	}, {
 		key: 'componentDidUpdate',
 		value: function componentDidUpdate() {
-			this.animated();
+			if (this.props.duration > 0) {
+				this.animated();
+			}
 		}
 	}, {
 		key: 'render',
@@ -94,28 +93,22 @@ var Router = function (_React$Component) {
 			return _react2.default.createElement(
 				'div',
 				{ className: 'router' },
-				this.state.current.map(function (item) {
+				(this.props.duration > 0 ? this.state.current : this.state.end).map(function (item) {
 					var uri = item.uri,
 					    className = item.className,
 					    index = item.index;
 					var _pages$uri = _this3.pages[uri],
-					    Component = _pages$uri.Component,
-					    path = _pages$uri.path,
-					    query = _pages$uri.query,
-					    match = _pages$uri.match,
-					    args = _pages$uri.args,
+					    Type = _pages$uri.Type,
+					    component = _pages$uri.component,
+					    context = _pages$uri.context,
 					    props = _pages$uri.props;
 
-					var context = { index: index, uri: uri, path: path, query: query, match: match, args: args, props: props, observer: _h.observer, navigateTo: _h.history.navigateTo, backTo: _h.history.backTo, replaceWith: _h.history.replaceWith };
-					return _react2.default.createElement(
-						'div',
-						{
-							className: 'route ' + className,
-							'data-uri': uri,
-							key: uri
-						},
-						_react2.default.createElement(Component, { context: context, active: className === 'current' })
-					);
+					return _react2.default.createElement(Type, {
+						context: _extends({ index: index }, context, { props: props }),
+						className: className,
+						component: component,
+						key: uri
+					});
 				})
 			);
 		}
@@ -126,18 +119,18 @@ var Router = function (_React$Component) {
 
 Router.propTypes = {
 	path: _propTypes2.default.string,
-	children: _propTypes2.default.arrayOf(_Route2.default, Router, _propTypes2.default.func).isRequired,
+	children: _propTypes2.default.arrayOf(_Route2.default, Router, _Redirect2.default, _propTypes2.default.func).isRequired,
 	cache: _propTypes2.default.bool,
 	notFound: _propTypes2.default.func,
 	duration: _propTypes2.default.number,
-	useHistoryState: _propTypes2.default.bool
+	delay: _propTypes2.default.number
 };
 Router.defaultProps = {
 	path: '',
 	cache: false,
 	notFound: _NotFound2.default,
 	duration: 400,
-	useHistoryState: true
+	delay: 16
 };
 
 var _initialiseProps = function _initialiseProps() {
@@ -149,11 +142,65 @@ var _initialiseProps = function _initialiseProps() {
 		    end = _state.end;
 
 		if (next.length > 0) {
-			var timeout = next.length > 1 ? 16 : _this4.props.duration;
+			var timeout = next.length > 1 ? _this4.props.delay : _this4.props.duration;
 			setTimeout(function () {
 				_this4.setState({ current: next, next: end, end: [] });
 			}, timeout);
 		}
+	};
+
+	this.parseRoutes = function (routes) {
+		var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+
+		routes.forEach(function (r) {
+			var p = ('' + prefix + (r.props.path || '')).replace(/\/{2,}/g, '/');
+			if (r.type === _Route2.default) {
+				var component = r.props.component;
+
+				var variables = [];
+				var rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
+					variables.push(m.slice(1));
+					return '([a-zA-Z0-9]+)';
+				});
+				_this4.routes.push({
+					Type: _Route.Container,
+					component: component,
+					rule: new RegExp('^' + rule + '$'),
+					variables: variables,
+					props: {
+						path: p
+					}
+				});
+			} else if (r.type === _Redirect2.default) {
+				var _r$props = r.props,
+				    to = _r$props.to,
+				    replace = _r$props.replace;
+
+				var _variables = [];
+				var _rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
+					_variables.push(m.slice(1));
+					return '([a-zA-Z0-9]+)';
+				});
+				_this4.routes.push({
+					Type: r.type,
+					component: null,
+					rule: new RegExp('^' + _rule + '$'),
+					variables: _variables,
+					props: {
+						path: p,
+						to: to,
+						replace: replace
+					}
+				});
+			} else if (r.type === Router) {
+				_this4.parseRoutes(r.props.children, '' + prefix + (result.props.path || ''));
+			} else if (typeof r.type === 'function') {
+				var _result = r.type();
+				if (_result && _result.type === Router) {
+					_this4.parseRoutes(_result.props.children, '' + prefix + (_result.props.path || ''));
+				}
+			}
+		});
 	};
 
 	this.parseRoute = function (requestURI) {
@@ -168,7 +215,8 @@ var _initialiseProps = function _initialiseProps() {
 			if (found) {
 				return;
 			}
-			var Component = route.Component,
+			var Type = route.Type,
+			    component = route.component,
 			    path = route.path,
 			    rule = route.rule,
 			    variables = route.variables,
@@ -183,13 +231,16 @@ var _initialiseProps = function _initialiseProps() {
 					}
 				}
 				var page = {
-					Component: Component,
-					uri: uri,
-					path: pathname,
-					query: query,
-					match: match,
-					args: args,
-					props: props
+					Type: Type,
+					component: component,
+					props: props,
+					context: {
+						uri: uri,
+						pathname: pathname,
+						query: query,
+						match: match,
+						args: args
+					}
 				};
 				_this4.pages[uri] = page;
 				found = true;
@@ -197,12 +248,16 @@ var _initialiseProps = function _initialiseProps() {
 		});
 		if (!found) {
 			var page = {
-				Component: _this4.props.notFound,
-				uri: uri,
-				path: pathname,
-				query: query,
-				match: {},
-				args: args
+				Type: _Route.Container,
+				component: _this4.props.notFound,
+				props: {},
+				context: {
+					uri: uri,
+					pathname: pathname,
+					query: query,
+					match: {},
+					args: args
+				}
 			};
 			_this4.pages[uri] = page;
 		}
@@ -247,53 +302,6 @@ var _initialiseProps = function _initialiseProps() {
 			return undefined;
 		}
 		return value;
-	};
-
-	this.parseRoutes = function (routes) {
-		var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-
-		routes.forEach(function (r) {
-			if (r.type === _Route2.default) {
-				var _r$props = r.props,
-				    component = _r$props.component,
-				    path = _r$props.path;
-
-				var variables = [];
-				var rule = ('' + prefix + path).replace(/\\/g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
-					variables.push(m.slice(1));
-					return '([a-zA-Z0-9]+)';
-				});
-				_this4.routes.push({
-					Component: component,
-					path: '' + prefix + path,
-					rule: new RegExp('^' + rule + '$'),
-					variables: variables,
-					props: r.props
-				});
-			} else if (r.type === _Redirect2.default) {
-				var _path = r.props.path;
-
-				var _variables = [];
-				var _rule = ('' + prefix + _path).replace(/\\/g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
-					_variables.push(m.slice(1));
-					return '([a-zA-Z0-9]+)';
-				});
-				_this4.routes.push({
-					Component: r.type,
-					path: '' + prefix + _path,
-					rule: new RegExp('^' + _rule + '$'),
-					variables: _variables,
-					props: r.props
-				});
-			} else if (r.type === Router) {
-				_this4.parseRoutes(r.props.children, '' + prefix + (r.props.path || ''));
-			} else if (typeof r.type === 'function') {
-				var result = r.type();
-				if (result && result.type === Router) {
-					_this4.parseRoutes(result.props.children, '' + prefix + (result.props.path || ''));
-				}
-			}
-		});
 	};
 };
 

@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 import NotFound from './NotFound'
-import Route from './Route'
+import Route, { Container } from './Route'
 import Redirect from './Redirect'
 
 import { observer, history } from './h'
@@ -10,11 +10,11 @@ import { observer, history } from './h'
 export default class Router extends React.Component {
 	static propTypes = {
 		path: PropTypes.string,
-		children: PropTypes.arrayOf(Route, Router, PropTypes.func).isRequired,
+		children: PropTypes.arrayOf(Route, Router, Redirect, PropTypes.func).isRequired,
 		cache: PropTypes.bool,
 		notFound: PropTypes.func,
 		duration: PropTypes.number,
-		useHistoryState: PropTypes.bool,
+		delay: PropTypes.number,
 	}
 
 	static defaultProps = {
@@ -22,7 +22,7 @@ export default class Router extends React.Component {
 		cache: false,
 		notFound: NotFound,
 		duration: 400,
-		useHistoryState: true,
+		delay: 16,
 	}
 
 	constructor(props) {
@@ -51,22 +51,71 @@ export default class Router extends React.Component {
 		history.init()
 	}
 
-	componentDidMount() {
-		this.animated()
-	}
-
 	componentDidUpdate() {
-		this.animated()
+		if (this.props.duration > 0) {
+			this.animated()
+		}
 	}
 
 	animated = () => {
 		const { next, end } = this.state
 		if (next.length > 0) {
-			const timeout = next.length > 1 ? 16 : this.props.duration
+			const timeout = next.length > 1 ? this.props.delay : this.props.duration
 			setTimeout(() => {
 				this.setState({ current: next, next: end, end: [] })
 			}, timeout)
 		}
+	}
+
+	parseRoutes = (routes, prefix = '') => {
+		routes.forEach(r => {
+			const p = `${prefix}${r.props.path || ''}`.replace(/\/{2,}/g, '/')
+			if (r.type === Route) {
+				const { component } = r.props
+				const variables = []
+				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
+					variables.push(m.slice(1))
+					return '([a-zA-Z0-9]+)'
+				})
+				this.routes.push({
+					Type: Container,
+					component,
+					rule: new RegExp(`^${rule}$`),
+					variables,
+					props: {
+						path: p,
+					},
+				})
+			}
+			else if (r.type === Redirect) {
+				const { to, replace } = r.props
+				const variables = []
+				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
+					variables.push(m.slice(1))
+					return '([a-zA-Z0-9]+)'
+				})
+				this.routes.push({
+					Type: r.type,
+					component: null,
+					rule: new RegExp(`^${rule}$`),
+					variables,
+					props: {
+						path: p,
+						to,
+						replace,
+					},
+				})
+			}
+			else if (r.type === Router) {
+				this.parseRoutes(r.props.children, `${prefix}${result.props.path || ''}`)
+			}
+			else if (typeof r.type === 'function') {
+				const result = r.type()
+				if (result && result.type === Router) {
+					this.parseRoutes(result.props.children, `${prefix}${result.props.path || ''}`)
+				}
+			}
+		})
 	}
 
 	parseRoute = requestURI => {
@@ -76,7 +125,7 @@ export default class Router extends React.Component {
 			if (found) {
 				return
 			}
-			const { Component, path, rule, variables, props } = route
+			const { Type, component, path, rule, variables, props } = route
 			const matches = pathname.match(rule)
 			if ((path === pathname) || matches) {
 				const match = {}
@@ -86,13 +135,16 @@ export default class Router extends React.Component {
 					}
 				}
 				const page = {
-					Component,
-					uri,
-					path: pathname,
-					query,
-					match,
-					args,
+					Type,
+					component,
 					props,
+					context: {
+						uri,
+						pathname,
+						query,
+						match,
+						args,
+					}
 				}
 				this.pages[uri] = page
 				found = true
@@ -100,12 +152,16 @@ export default class Router extends React.Component {
 		})
 		if (!found) {
 			const page = {
-				Component: this.props.notFound,
-				uri,
-				path: pathname,
-				query,
-				match: {},
-				args,
+				Type: Container,
+				component: this.props.notFound,
+				props: {},
+				context: {
+					uri,
+					pathname,
+					query,
+					match: {},
+					args,
+				},
 			}
 			this.pages[uri] = page
 		}
@@ -158,64 +214,18 @@ export default class Router extends React.Component {
 		return value
 	}
 
-	parseRoutes = (routes, prefix = '') => {
-		routes.forEach(r => {
-			if (r.type === Route) {
-				const { component, path } = r.props
-				const variables = []
-				const rule = `${prefix}${path}`.replace(/\\/g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
-					variables.push(m.slice(1))
-					return '([a-zA-Z0-9]+)'
-				})
-				this.routes.push({
-					Component: component,
-					path: `${prefix}${path}`,
-					rule: new RegExp(`^${rule}$`),
-					variables,
-					props: r.props,
-				})
-			}
-			else if (r.type === Redirect) {
-				const { path } = r.props
-				const variables = []
-				const rule = `${prefix}${path}`.replace(/\\/g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
-					variables.push(m.slice(1))
-					return '([a-zA-Z0-9]+)'
-				})
-				this.routes.push({
-					Component: r.type,
-					path: `${prefix}${path}`,
-					rule: new RegExp(`^${rule}$`),
-					variables,
-					props: r.props,
-				})
-			}
-			else if (r.type === Router) {
-				this.parseRoutes(r.props.children, `${prefix}${r.props.path || ''}`)
-			}
-			else if (typeof r.type === 'function') {
-				const result = r.type()
-				if (result && result.type === Router) {
-					this.parseRoutes(result.props.children, `${prefix}${result.props.path || ''}`)
-				}
-			}
-		})
-	}
-
 	render() {
 		return <div className="router">
 			{
-				this.state.current.map(item => {
+				(this.props.duration > 0 ? this.state.current : this.state.end).map(item => {
 					const { uri, className, index } = item
-					const { Component, path, query, match, args, props } = this.pages[uri]
-					const context = { index, uri, path, query, match, args, props, observer, navigateTo: history.navigateTo, backTo: history.backTo, replaceWith: history.replaceWith }
-					return <div
-						className={`route ${className}`}
-						data-uri={uri}
+					const { Type, component, context, props } = this.pages[uri]
+					return <Type
+						context={{ index, ...context, props }}
+						className={className}
+						component={component}
 						key={uri}
-					>
-						<Component context={context} active={className === 'current'} />
-					</div>
+					/>
 				})
 			}
 		</div>

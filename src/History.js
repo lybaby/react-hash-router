@@ -26,9 +26,9 @@ export default class History {
 		window.addEventListener('hashchange', this.hashChange, false)
 
 		this.emitRouteChange({
-			current: [{ uri: this.history[this.current], className: 'current', index: history.state.PAGE + 1 }],
+			current: [{ uri: this.history[this.current], className: 'current', index: this.current }],
 			next: [],
-			end: [],
+			end: [{ uri: this.history[this.current], className: 'current', index: this.current }],
 		})
 	}
 
@@ -48,11 +48,11 @@ export default class History {
 				this.history.pop()
 			}
 			this.history.push(newURI)
-			this.current = this.history.length - 1
+			this.current = page
 			this.emitRouteChange({
-				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
-				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
-				end: [{ uri: newURI, className: 'current', index: index + 1 }],
+				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: page }],
+				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: page }],
+				end: [{ uri: newURI, className: 'current', index: page }],
 			})
 		}
 		// page, current => forward
@@ -60,9 +60,9 @@ export default class History {
 			const index = this.current
 			this.current = page
 			this.emitRouteChange({
-				current: [{ uri: newURI, className: 'prev', index: index - 1 }, { uri: oldURI, className: 'current', index }],
-				next: [{ uri: newURI, className: 'current', index: index - 1 }, { uri: oldURI, className: 'next', index }],
-				end: [{ uri: newURI, className: 'current', index }],
+				current: [{ uri: newURI, className: 'prev', index: page }, { uri: oldURI, className: 'current', index }],
+				next: [{ uri: newURI, className: 'current', index: page }, { uri: oldURI, className: 'next', index }],
+				end: [{ uri: newURI, className: 'current', index: page }],
 			})
 		}
 		// current, page => backward
@@ -70,9 +70,9 @@ export default class History {
 			const index = this.current
 			this.current = page
 			this.emitRouteChange({
-				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: index + 1 }],
-				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: index + 1 }],
-				end: [{ uri: newURI, className: 'current', index: index + 1 }],
+				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: page }],
+				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: page }],
+				end: [{ uri: newURI, className: 'current', index: page }],
 			})
 		}
 		// refresh

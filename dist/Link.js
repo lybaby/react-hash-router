@@ -48,7 +48,8 @@ var Link = function (_React$Component) {
 		return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = Link.__proto__ || Object.getPrototypeOf(Link)).call.apply(_ref, [this].concat(args))), _this), _this.click = function () {
 			_this.link.click();
 		}, _this.handleClick = function () {
-			var _ref2 = _asyncToGenerator(_regenerator2.default.mark(function _callee(ev) {
+			var _ref2 = _asyncToGenerator( /*#__PURE__*/_regenerator2.default.mark(function _callee(ev) {
+				var goon;
 				return _regenerator2.default.wrap(function _callee$(_context) {
 					while (1) {
 						switch (_context.prev = _context.next) {
@@ -58,11 +59,13 @@ var Link = function (_React$Component) {
 								return _this.props.onClick(ev);
 
 							case 3:
-								if (!ev.isDefaultPrevented()) {
+								goon = _context.sent;
+
+								if (goon !== false && !ev.isDefaultPrevented()) {
 									_h.history.navigateTo(_this.props.to);
 								}
 
-							case 4:
+							case 5:
 							case 'end':
 								return _context.stop();
 						}

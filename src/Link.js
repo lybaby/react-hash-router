@@ -30,8 +30,8 @@ export default class Link extends React.Component {
 
 	handleClick = async ev => {
 		ev.persist()
-		await this.props.onClick(ev)
-		if (!ev.isDefaultPrevented()) {
+		const goon = await this.props.onClick(ev)
+		if (goon !== false && !ev.isDefaultPrevented()) {
 			history.navigateTo(this.props.to)
 		}
 	}
