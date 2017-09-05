@@ -9,7 +9,7 @@ export default class History {
 		this.restoreHistory()
 
 		// current
-		if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
+		if (history.state === null || !('PAGE' in history.state)) {
 			history.replaceState({ PAGE: history.length - 1 }, '')
 			const newURI = this.getHashURI(window.location.href)
 			const index = this.current

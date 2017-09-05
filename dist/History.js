@@ -184,7 +184,7 @@ var History = function History(observer) {
 	this.restoreHistory();
 
 	// current
-	if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
+	if (history.state === null || !('PAGE' in history.state)) {
 		history.replaceState({ PAGE: history.length - 1 }, '');
 		var newURI = this.getHashURI(window.location.href);
 		var index = this.current;
