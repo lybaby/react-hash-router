@@ -114,7 +114,7 @@ var History = function History(observer) {
 
 	this.navigateTo = function (to) {
 		if (to) {
-			if (/^(mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
+			if (/^(mailto|tel):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
 				window.open(to, '_self');
 			} else {
 				location.hash = _this.buildURI(to);

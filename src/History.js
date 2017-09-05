@@ -121,7 +121,7 @@ export default class History {
 
 	navigateTo = to => {
 		if (to) {
-			if (/^(mailto):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
+			if (/^(mailto|tel):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
 				window.open(to, '_self')
 			}
 			else {
