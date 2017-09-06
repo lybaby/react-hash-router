@@ -1,6 +1,6 @@
 {
   "name": "react-hash-router",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "An hash-based router for React",
   "files": [
 	"src/index.js",

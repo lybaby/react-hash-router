@@ -33,13 +33,16 @@ var History = function History(observer) {
 		var oldURI = _this.getHashURI(ev.oldURL);
 		var newURI = _this.getHashURI(ev.newURL);
 
+		// push
 		if (pushState) {
 			var index = _this.current;
-			while (_this.current + 1 < _this.history.length) {
-				_this.history.pop();
-			}
-			_this.history.push(newURI);
+			_this.history[page] = newURI;
 			_this.current = page;
+			Object.keys(_this.history).forEach(function (p) {
+				if (p > _this.current) {
+					delete _this.history[p];
+				}
+			});
 			_this.emitRouteChange({
 				current: [{ uri: oldURI, className: 'current', index: index }, { uri: newURI, className: 'next', index: page }],
 				next: [{ uri: oldURI, className: 'prev', index: index }, { uri: newURI, className: 'current', index: page }],
@@ -152,10 +155,9 @@ var History = function History(observer) {
 			next: [],
 			end: []
 		});
-		console.log('uri = ', uri);
 		// 安全问题
 		if (/^[a-z]+:\/\//i.test(uri)) {
-			window.location.href = uri;
+			window.open(uri, '_self');
 		} else {
 			window.history.replaceState(window.history.state, '', '#' + uri);
 		}
@@ -164,7 +166,7 @@ var History = function History(observer) {
 
 	this.restoreHistory = function () {
 		var cache = JSON.parse(sessionStorage.getItem('history') || 'null');
-		if (cache && Array.isArray(cache.history) && typeof cache.current === 'number' && cache.history.length > 0 && cache.history.length > cache.current) {
+		if (cache && 'current' in cache && 'history' in cache) {
 			_this.history = cache.history;
 			_this.current = cache.current;
 		}
@@ -176,8 +178,8 @@ var History = function History(observer) {
 	};
 
 	this.observer = observer;
-	this.history = [];
-	this.current = -1;
+	this.history = { 0: '' };
+	this.current = 0;
 	this.times = 0;
 
 	// history
@@ -185,14 +187,14 @@ var History = function History(observer) {
 
 	// current
 	if (history.state === null || !('PAGE' in history.state)) {
-		history.replaceState({ PAGE: history.length - 1 }, '');
-		var newURI = this.getHashURI(window.location.href);
-		var index = this.current;
-		while (this.current + 1 < this.history.length) {
-			this.history.pop();
-		}
-		this.history.push(newURI);
-		this.current = this.history.length - 1;
+		this.current = history.length - 1;
+		history.replaceState({ PAGE: this.current }, '');
+		this.history[this.current] = this.getHashURI(window.location.href);
+		Object.keys(this.history).forEach(function (page) {
+			if (page > _this.current) {
+				delete _this.history[page];
+			}
+		});
 		this.cacheHistory();
 	}
 };

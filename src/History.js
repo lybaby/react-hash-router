@@ -1,8 +1,8 @@
 export default class History {
 	constructor(observer) {
 		this.observer = observer
-		this.history = []
-		this.current = -1
+		this.history = { 0: '' }
+		this.current = 0
 		this.times = 0
 
 		// history
@@ -10,14 +10,14 @@ export default class History {
 
 		// current
 		if (history.state === null || !('PAGE' in history.state)) {
-			history.replaceState({ PAGE: history.length - 1 }, '')
-			const newURI = this.getHashURI(window.location.href)
-			const index = this.current
-			while (this.current + 1 < this.history.length) {
-				this.history.pop()
-			}
-			this.history.push(newURI)
-			this.current = this.history.length - 1
+			this.current = history.length - 1
+			history.replaceState({ PAGE: this.current }, '')
+			this.history[this.current] = this.getHashURI(window.location.href)
+			Object.keys(this.history).forEach(page => {
+				if (page > this.current) {
+					delete this.history[page]
+				}
+			})
 			this.cacheHistory()
 		}
 	}
@@ -42,13 +42,16 @@ export default class History {
 		const oldURI = this.getHashURI(ev.oldURL)
 		const newURI = this.getHashURI(ev.newURL)
 
+		// push
 		if (pushState) {
 			const index = this.current
-			while (this.current + 1 < this.history.length) {
-				this.history.pop()
-			}
-			this.history.push(newURI)
+			this.history[page] = newURI
 			this.current = page
+			Object.keys(this.history).forEach(p => {
+				if (p > this.current) {
+					delete this.history[p]
+				}
+			})
 			this.emitRouteChange({
 				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: page }],
 				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: page }],
@@ -159,10 +162,9 @@ export default class History {
 			next: [],
 			end: [],
 		})
-		console.log('uri = ', uri)
 		// 安全问题
 		if (/^[a-z]+:\/\//i.test(uri)) {
-			window.location.href = uri
+			window.open(uri, '_self')
 		}
 		else {
 			window.history.replaceState(window.history.state, '', `#${uri}`)
@@ -172,7 +174,7 @@ export default class History {
 
 	restoreHistory = () => {
 		const cache = JSON.parse(sessionStorage.getItem('history') || 'null')
-		if (cache && Array.isArray(cache.history) && (typeof cache.current === 'number') && cache.history.length > 0 && cache.history.length > cache.current) {
+		if (cache && ('current' in cache) && ('history' in cache)) {
 			this.history = cache.history
 			this.current = cache.current
 		}
