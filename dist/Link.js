@@ -49,7 +49,8 @@ var Link = function (_React$Component) {
 			_this.link.click();
 		}, _this.handleClick = function () {
 			var _ref2 = _asyncToGenerator( /*#__PURE__*/_regenerator2.default.mark(function _callee(ev) {
-				var goon;
+				var goon, _this$props, to, back, replace, path;
+
 				return _regenerator2.default.wrap(function _callee$(_context) {
 					while (1) {
 						switch (_context.prev = _context.next) {
@@ -62,7 +63,18 @@ var Link = function (_React$Component) {
 								goon = _context.sent;
 
 								if (goon !== false && !ev.isDefaultPrevented()) {
-									_h.history.navigateTo(_this.props.to);
+									_this$props = _this.props, to = _this$props.to, back = _this$props.back, replace = _this$props.replace, path = _this$props.path;
+
+									if (to) {
+										_h.history.navigateTo(to);
+									} else if (back) {
+										_h.history.backTo(back);
+									} else if (replace) {
+										_h.history.replaceWith(replace);
+									} else if (path) {
+										_h.history.loads(path);
+									}
+									// history.navigateTo(this.props.to)
 								}
 
 							case 5:

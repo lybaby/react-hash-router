@@ -67,7 +67,7 @@ var Redirect = function (_React$Component) {
 		value: function render() {
 			return _react2.default.createElement(
 				'div',
-				null,
+				{ className: 'route' },
 				'redirect to: ',
 				this.redirectURI
 			);

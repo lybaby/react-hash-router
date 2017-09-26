@@ -51,10 +51,13 @@ var Router = function (_React$Component) {
 		_this.state = {
 			current: [],
 			next: [],
-			end: []
+			end: [],
+			transition: 0
 		};
 		_this.routes = [];
 		_this.pages = {};
+		_this.playback = [];
+		_this.emiting = false;
 
 		_this.parseRoutes(props.children, props.path || '');
 		return _this;
@@ -73,17 +76,13 @@ var Router = function (_React$Component) {
 						}
 					});
 				});
-				_this2.setState(routes);
+				_this2.playback.push(routes);
+				if (!_this2.emiting) {
+					_this2.emit();
+				}
 			});
 
 			_h.history.init();
-		}
-	}, {
-		key: 'componentDidUpdate',
-		value: function componentDidUpdate() {
-			if (this.props.duration > 0) {
-				this.animated();
-			}
 		}
 	}, {
 		key: 'render',
@@ -92,20 +91,33 @@ var Router = function (_React$Component) {
 
 			return _react2.default.createElement(
 				'div',
-				{ className: 'router' },
-				(this.props.duration > 0 ? this.state.current : this.state.end).map(function (item) {
+				{ style: { position: 'relative', overflowX: 'hidden', width: '100%', height: '100%' } },
+				this.state.current.map(function (item) {
 					var uri = item.uri,
 					    className = item.className,
 					    index = item.index;
+
+					var pos = { 'prev': '0', 'current': '0', 'next': '100' }[className];
+					var style = {
+						position: 'absolute',
+						zIndex: index + 1,
+						width: '100%',
+						height: '100%',
+						transition: 'transform ease ' + _this3.state.transition + 'ms',
+						transform: 'translate(' + pos + '%, 0) translateZ(0)'
+					};
 					var _pages$uri = _this3.pages[uri],
 					    Type = _pages$uri.Type,
 					    component = _pages$uri.component,
 					    context = _pages$uri.context,
-					    props = _pages$uri.props;
+					    props = _pages$uri.props,
+					    mount = _pages$uri.mount,
+					    unmount = _pages$uri.unmount,
+					    cache = _pages$uri.cache;
 
 					return _react2.default.createElement(Type, {
 						context: _extends({ index: index }, context, { props: props }),
-						className: className,
+						style: style,
 						component: component,
 						key: uri
 					});
@@ -136,16 +148,39 @@ Router.defaultProps = {
 var _initialiseProps = function _initialiseProps() {
 	var _this4 = this;
 
-	this.animated = function () {
-		var _state = _this4.state,
-		    next = _state.next,
-		    end = _state.end;
+	this.emit = function () {
+		_this4.emiting = true;
+		if (_this4.playback.length === 0) {
+			_this4.emiting = false;
+			return;
+		}
 
-		if (next.length > 0) {
-			var timeout = next.length > 1 ? _this4.props.delay : _this4.props.duration;
+		var _playback$ = _this4.playback[0],
+		    current = _playback$.current,
+		    next = _playback$.next,
+		    end = _playback$.end;
+
+		_this4.playback = _this4.playback.slice(1);
+		var _props = _this4.props,
+		    duration = _props.duration,
+		    delay = _props.delay;
+
+		if (duration > 0) {
+			_this4.setState({ current: current, transition: 0 });
 			setTimeout(function () {
-				_this4.setState({ current: next, next: end, end: [] });
-			}, timeout);
+				_this4.setState({ current: next, transition: duration });
+				setTimeout(function () {
+					_this4.setState({ current: end, transition: delay }, function () {
+						setTimeout(function () {
+							return _this4.emit();
+						}, delay);
+					});
+				}, duration);
+			}, delay);
+		} else {
+			_this4.setState({ current: end, transition: 0 }, function () {
+				return _this4.emit();
+			});
 		}
 	};
 
@@ -160,7 +195,7 @@ var _initialiseProps = function _initialiseProps() {
 				var variables = [];
 				var rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
 					variables.push(m.slice(1));
-					return '([a-zA-Z0-9]+)';
+					return '([a-zA-Z0-9\-_]+)';
 				});
 				_this4.routes.push({
 					Type: _Route.Container,
@@ -179,7 +214,7 @@ var _initialiseProps = function _initialiseProps() {
 				var _variables = [];
 				var _rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
 					_variables.push(m.slice(1));
-					return '([a-zA-Z0-9]+)';
+					return '([a-zA-Z0-9\-_]+)';
 				});
 				_this4.routes.push({
 					Type: r.type,
@@ -220,7 +255,10 @@ var _initialiseProps = function _initialiseProps() {
 			    path = route.path,
 			    rule = route.rule,
 			    variables = route.variables,
-			    props = route.props;
+			    props = route.props,
+			    mount = route.mount,
+			    unmount = route.unmount,
+			    cache = route.cache;
 
 			var matches = pathname.match(rule);
 			if (path === pathname || matches) {
@@ -240,7 +278,10 @@ var _initialiseProps = function _initialiseProps() {
 						query: query,
 						match: match,
 						args: args
-					}
+					},
+					mount: mount,
+					unmount: unmount,
+					cache: cache
 				};
 				_this4.pages[uri] = page;
 				found = true;
@@ -257,7 +298,10 @@ var _initialiseProps = function _initialiseProps() {
 					query: query,
 					match: {},
 					args: args
-				}
+				},
+				mount: function mount() {},
+				unmount: function unmount() {},
+				cache: false
 			};
 			_this4.pages[uri] = page;
 		}

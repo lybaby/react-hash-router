@@ -18,20 +18,20 @@ class Container extends React.Component {
 	static propTypes = {
 		component: PropTypes.func.isRequired,
 		context: PropTypes.shape(),
-		className: PropTypes.string,
 	}
 
 	static defaultProps = {
 		context: {},
-		className: '',
 	}
 
 	shouldComponentUpdate = nextProps => {
 		if ((JSON.stringify(nextProps.context) === JSON.stringify(this.props.context))
 			&& (nextProps.component === this.props.component)
 		) {
-			if (nextProps.className !== this.props.className) {
-				this.container.className = `route ${nextProps.className}`
+			if (nextProps.style.transform !== this.props.style.transform) {
+				Object.keys(nextProps.style).forEach(name => {
+					this.container.style[name] = nextProps.style[name]
+				})
 			}
 			return false
 		}
@@ -39,17 +39,18 @@ class Container extends React.Component {
 	}
 
 	render() {
-		const { className, context, component } = this.props
+		const { style, context, component } = this.props
 		const Component = component
 
 		return <div
-			className={`route ${className}`}
+			style={style}
 			data-uri={context.uri}
 			ref={ref => { this.container = ref }}
 		>
 			<Component
 				context={{ ...context, observer, navigateTo: history.navigateTo, backTo: history.backTo, replaceWith: history.replaceWith }}
 				key={context.uri}
+				ref={ref => { this.component = ref }}
 			/>
 		</div>
 	}

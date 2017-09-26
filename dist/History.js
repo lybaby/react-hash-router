@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -23,6 +25,85 @@ var History = function History(observer) {
 		});
 	};
 
+	this.push = function (currentURI, newURI, page) {
+		var index = _this.current;
+		_this.history[page] = newURI;
+		_this.current = page;
+		Object.keys(_this.history).forEach(function (p) {
+			if (p > _this.current) {
+				delete _this.history[p];
+			}
+		});
+		_this.emitRouteChange({
+			current: [{ uri: currentURI, className: 'current', index: index }, { uri: newURI, className: 'next', index: page }],
+			next: [{ uri: currentURI, className: 'prev', index: index }, { uri: newURI, className: 'current', index: page }],
+			end: [{ uri: newURI, className: 'current', index: page }]
+		});
+		_this.cacheHistory();
+	};
+
+	this.backward = function (previousURI, currentURI, page) {
+		var index = _this.current;
+		_this.current = page;
+		_this.emitRouteChange({
+			current: [{ uri: previousURI, className: 'prev', index: page }, { uri: currentURI, className: 'current', index: index }],
+			next: [{ uri: previousURI, className: 'current', index: page }, { uri: currentURI, className: 'next', index: index }],
+			end: [{ uri: previousURI, className: 'current', index: page }]
+		});
+		_this.cacheHistory();
+	};
+
+	this.forward = function (currentURI, nextURI, page) {
+		var index = _this.current;
+		_this.current = page;
+		_this.emitRouteChange({
+			current: [{ uri: currentURI, className: 'current', index: index }, { uri: nextURI, className: 'next', index: page }],
+			next: [{ uri: currentURI, className: 'prev', index: index }, { uri: nextURI, className: 'current', index: page }],
+			end: [{ uri: nextURI, className: 'current', index: page }]
+		});
+		_this.cacheHistory();
+	};
+
+	this.replace = function (currentURI, newURI, page) {
+		_this.emitRouteChange({
+			current: [{ uri: newURI, className: 'current', index: _this.current }],
+			next: [],
+			end: []
+		});
+		_this.cacheHistory();
+	};
+
+	this.loads = function (path) {
+		path.split(',').forEach(function (p) {
+			var _p$split = p.split(':'),
+			    _p$split2 = _slicedToArray(_p$split, 2),
+			    action = _p$split2[0],
+			    uri = _p$split2[1];
+
+			if (action === 'go') {
+				_this.playback.unshift(function () {
+					return _this.navigateTo(uri);
+				});
+			} else if (action === 'back') {
+				_this.playback.unshift(function () {
+					return _this.backTo(uri);
+				});
+			} else if (action === 'begin') {
+				_this.playback.unshift(function () {
+					return _this.backTo(uri, true);
+				});
+			} else if (action === 'replace') {
+				_this.playback.unshift(function () {
+					return _this.replaceWith(uri);
+				});
+			}
+		});
+		if (_this.playback.length > 0) {
+			_this.beginPath();
+			_this.playback.pop()();
+		}
+	};
+
 	this.hashChange = function (ev) {
 		var pushState = false;
 		if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
@@ -30,55 +111,42 @@ var History = function History(observer) {
 			pushState = true;
 		}
 		var page = history.state.PAGE;
-		var oldURI = _this.getHashURI(ev.oldURL);
+		var currentURI = _this.getHashURI(ev.oldURL);
 		var newURI = _this.getHashURI(ev.newURL);
 
 		// push
 		if (pushState) {
-			var index = _this.current;
-			_this.history[page] = newURI;
-			_this.current = page;
-			Object.keys(_this.history).forEach(function (p) {
-				if (p > _this.current) {
-					delete _this.history[p];
-				}
-			});
-			_this.emitRouteChange({
-				current: [{ uri: oldURI, className: 'current', index: index }, { uri: newURI, className: 'next', index: page }],
-				next: [{ uri: oldURI, className: 'prev', index: index }, { uri: newURI, className: 'current', index: page }],
-				end: [{ uri: newURI, className: 'current', index: page }]
-			});
+			_this.push(currentURI, newURI, page);
 		}
 		// page, current => forward
 		else if (_this.current > page) {
-				var _index = _this.current;
-				_this.current = page;
-				_this.emitRouteChange({
-					current: [{ uri: newURI, className: 'prev', index: page }, { uri: oldURI, className: 'current', index: _index }],
-					next: [{ uri: newURI, className: 'current', index: page }, { uri: oldURI, className: 'next', index: _index }],
-					end: [{ uri: newURI, className: 'current', index: page }]
-				});
+				_this.backward(newURI, currentURI, page);
 			}
 			// current, page => backward
 			else if (_this.current < page) {
-					var _index2 = _this.current;
-					_this.current = page;
-					_this.emitRouteChange({
-						current: [{ uri: oldURI, className: 'current', index: _index2 }, { uri: newURI, className: 'next', index: page }],
-						next: [{ uri: oldURI, className: 'prev', index: _index2 }, { uri: newURI, className: 'current', index: page }],
-						end: [{ uri: newURI, className: 'current', index: page }]
-					});
+					_this.forward(currentURI, newURI, page);
 				}
 				// refresh
 				else {
 						//
 					}
-		_this.cacheHistory();
+
+		if (_this.recoding) {
+			if (_this.playback.length > 0) {
+				_this.playback.pop()();
+			} else {
+				_this.endPath();
+			}
+		}
 	};
 
 	this.emitRouteChange = function (routes) {
 		_this.times += 1;
-		_this.observer.publish('ROUTER_CHANGE', routes);
+		if (_this.recoding) {
+			_this.path.push(routes.end[0]);
+		} else {
+			_this.observer.publish('ROUTER_CHANGE', routes);
+		}
 	};
 
 	this.getHashURI = function (url) {
@@ -91,11 +159,12 @@ var History = function History(observer) {
 			return to;
 		}
 		if (/^\/\//i.test(to)) {
-			return location.protocol + to;
+			return window.location.protocol + to;
 		} else if (to.indexOf('/') === 0) {
 			return to;
 		} else {
-			var hash = location.hash ? location.hash.slice(1).split('?', 1)[0] : '';
+			// const hash = window.location.hash ? window.location.hash.slice(1).split('?', 1)[0] : ''
+			var hash = _this.history[_this.current];
 			var p = hash.split('/');
 			p.pop();
 
@@ -120,7 +189,13 @@ var History = function History(observer) {
 			if (/^(mailto|tel):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
 				window.open(to, '_self');
 			} else {
-				location.hash = _this.buildURI(to);
+				// const oldURI = this.history[this.current]
+				// const newURI = this.buildURI(to)
+				// window.history.pushState({ PAGE: this.current + 1 }, "", `#${newURI}`)
+				// this.push(oldURI, newURI, true)
+				window.location.hash = _this.buildURI(to);
+				// window.history.pushState({PAGE: this.current + 1}, "", `#${this.buildURI(to)}`)
+				// history.hashChange({ oldURL: window.location.href, newURL: window.location.href })
 			}
 		}
 	};
@@ -132,14 +207,16 @@ var History = function History(observer) {
 		if (fromStart) {
 			for (var i = 0; i < _this.current; i += 1) {
 				if (_this.history[i] === uri) {
-					history.go(i - _this.current);
+					window.history.go(i - _this.current);
+					// this.backward(this.history[this.current], uri, i)
 					break;
 				}
 			}
 		} else {
 			for (var _i = _this.current - 1; _i >= 0; _i -= 1) {
 				if (_this.history[_i] === uri) {
-					history.go(_i - _this.current);
+					window.history.go(_i - _this.current);
+					// this.backward(this.history[this.current], uri, i)
 					break;
 				}
 			}
@@ -164,6 +241,34 @@ var History = function History(observer) {
 		_this.cacheHistory();
 	};
 
+	this.savePath = function () {
+		return { current: _this.current, history: _this.history };
+	};
+
+	this.beginPath = function () {
+		_this.recoding = true;
+		_this.path = [{ uri: _this.history[_this.current], index: _this.current }];
+	};
+
+	this.endPath = function () {
+		_this.recoding = false;
+		var current = _this.path[0];
+		var end = _this.path.slice(-1)[0];
+		if (current.index < end.index) {
+			_this.emitRouteChange({
+				current: [{ uri: current.uri, className: 'current', index: current.index }, { uri: end.uri, className: 'next', index: end.index }],
+				next: [{ uri: current.uri, className: 'prev', index: current.index }, { uri: end.uri, className: 'current', index: end.index }],
+				end: [{ uri: end.uri, className: 'current', index: end.index }]
+			});
+		} else {
+			_this.emitRouteChange({
+				current: [{ uri: end.uri, className: 'prev', index: end.index }, { uri: current.uri, className: 'current', index: current.index }],
+				next: [{ uri: end.uri, className: 'current', index: end.index }, { uri: current.uri, className: 'next', index: current.index }],
+				end: [{ uri: end.uri, className: 'current', index: end.index }]
+			});
+		}
+	};
+
 	this.restoreHistory = function () {
 		var cache = JSON.parse(sessionStorage.getItem('history') || 'null');
 		if (cache && 'current' in cache && 'history' in cache) {
@@ -181,6 +286,9 @@ var History = function History(observer) {
 	this.history = { 0: '' };
 	this.current = 0;
 	this.times = 0;
+	this.path = [];
+	this.recoding = false;
+	this.playback = [];
 
 	// history
 	this.restoreHistory();

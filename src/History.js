@@ -4,6 +4,9 @@ export default class History {
 		this.history = { 0: '' }
 		this.current = 0
 		this.times = 0
+		this.path = []
+		this.recoding = false
+		this.playback = []
 
 		// history
 		this.restoreHistory()
@@ -32,6 +35,76 @@ export default class History {
 		})
 	}
 
+	push = (currentURI, newURI, page) => {
+		const index = this.current
+		this.history[page] = newURI
+		this.current = page
+		Object.keys(this.history).forEach(p => {
+			if (p > this.current) {
+				delete this.history[p]
+			}
+		})
+		this.emitRouteChange({
+			current: [{ uri: currentURI, className: 'current', index }, { uri: newURI, className: 'next', index: page }],
+			next: [{ uri: currentURI, className: 'prev', index }, { uri: newURI, className: 'current', index: page }],
+			end: [{ uri: newURI, className: 'current', index: page }],
+		})
+		this.cacheHistory()
+	}
+
+	backward = (previousURI, currentURI, page) => {
+		const index = this.current
+		this.current = page
+		this.emitRouteChange({
+			current: [{ uri: previousURI, className: 'prev', index: page }, { uri: currentURI, className: 'current', index }],
+			next: [{ uri: previousURI, className: 'current', index: page }, { uri: currentURI, className: 'next', index }],
+			end: [{ uri: previousURI, className: 'current', index: page }],
+		})
+		this.cacheHistory()
+	}
+
+	forward = (currentURI, nextURI, page) => {
+		const index = this.current
+		this.current = page
+		this.emitRouteChange({
+			current: [{ uri: currentURI, className: 'current', index }, { uri: nextURI, className: 'next', index: page }],
+			next: [{ uri: currentURI, className: 'prev', index }, { uri: nextURI, className: 'current', index: page }],
+			end: [{ uri: nextURI, className: 'current', index: page }],
+		})
+		this.cacheHistory()
+	}
+
+	replace = (currentURI, newURI, page) => {
+		this.emitRouteChange({
+			current: [{ uri: newURI, className: 'current', index: this.current }],
+			next: [],
+			end: [],
+		})
+		this.cacheHistory()
+	}
+
+	loads = path => {
+		path.split(',').forEach(p => {
+			const [action, uri] =p.split(':')
+			if (action === 'go') {
+				this.playback.unshift(() => this.navigateTo(uri))
+			}
+			else if (action === 'back') {
+				this.playback.unshift(() => this.backTo(uri))
+			}
+			else if (action === 'begin') {
+				this.playback.unshift(() => this.backTo(uri, true))
+			}
+			else if (action === 'replace') {
+				this.playback.unshift(() => this.replaceWith(uri))
+			}
+		})
+		if (this.playback.length > 0) {
+			this.beginPath()
+			this.playback.pop()()
+		}
+	}
+
 	hashChange = ev => {
 		let pushState = false
 		if (Object.prototype.toString.apply(history.state) !== '[object Object]' || !('PAGE' in history.state)) {
@@ -39,55 +112,44 @@ export default class History {
 			pushState = true
 		}
 		const page = history.state.PAGE
-		const oldURI = this.getHashURI(ev.oldURL)
+		const currentURI = this.getHashURI(ev.oldURL)
 		const newURI = this.getHashURI(ev.newURL)
 
 		// push
 		if (pushState) {
-			const index = this.current
-			this.history[page] = newURI
-			this.current = page
-			Object.keys(this.history).forEach(p => {
-				if (p > this.current) {
-					delete this.history[p]
-				}
-			})
-			this.emitRouteChange({
-				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: page }],
-				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: page }],
-				end: [{ uri: newURI, className: 'current', index: page }],
-			})
+			this.push(currentURI, newURI, page)
 		}
 		// page, current => forward
 		else if (this.current > page) {
-			const index = this.current
-			this.current = page
-			this.emitRouteChange({
-				current: [{ uri: newURI, className: 'prev', index: page }, { uri: oldURI, className: 'current', index }],
-				next: [{ uri: newURI, className: 'current', index: page }, { uri: oldURI, className: 'next', index }],
-				end: [{ uri: newURI, className: 'current', index: page }],
-			})
+			this.backward(newURI, currentURI, page)
 		}
 		// current, page => backward
 		else if (this.current < page) {
-			const index = this.current
-			this.current = page
-			this.emitRouteChange({
-				current: [{ uri: oldURI, className: 'current', index }, { uri: newURI, className: 'next', index: page }],
-				next: [{ uri: oldURI, className: 'prev', index }, { uri: newURI, className: 'current', index: page }],
-				end: [{ uri: newURI, className: 'current', index: page }],
-			})
+			this.forward(currentURI, newURI, page)
 		}
 		// refresh
 		else {
 			//
 		}
-		this.cacheHistory()
+
+		if (this.recoding) {
+			if (this.playback.length > 0) {
+				this.playback.pop()()
+			}
+			else {
+				this.endPath()
+			}
+		}
 	}
 
 	emitRouteChange = routes => {
 		this.times += 1
-		this.observer.publish('ROUTER_CHANGE', routes)
+		if (this.recoding) {
+			this.path.push(routes.end[0])
+		}
+		else {
+			this.observer.publish('ROUTER_CHANGE', routes)
+		}
 	}
 
 	getHashURI = url => {
@@ -100,13 +162,14 @@ export default class History {
 			return to
 		}
 		if (/^\/\//i.test(to)) {
-			return location.protocol + to
+			return window.location.protocol + to
 		}
 		else if (to.indexOf('/') === 0) {
 			return to
 		}
 		else {
-			const hash = location.hash ? location.hash.slice(1).split('?', 1)[0] : ''
+			// const hash = window.location.hash ? window.location.hash.slice(1).split('?', 1)[0] : ''
+			const hash = this.history[this.current]
 			const p = hash.split('/')
 			p.pop()
 			const [path, ...args] = to.split('?')
@@ -128,7 +191,13 @@ export default class History {
 				window.open(to, '_self')
 			}
 			else {
-				location.hash = this.buildURI(to)
+				// const oldURI = this.history[this.current]
+				// const newURI = this.buildURI(to)
+				// window.history.pushState({ PAGE: this.current + 1 }, "", `#${newURI}`)
+				// this.push(oldURI, newURI, true)
+				window.location.hash = this.buildURI(to)
+				// window.history.pushState({PAGE: this.current + 1}, "", `#${this.buildURI(to)}`)
+				// history.hashChange({ oldURL: window.location.href, newURL: window.location.href })
 			}
 		}
 	}
@@ -138,7 +207,8 @@ export default class History {
 		if (fromStart) {
 			for (let i = 0; i < this.current; i += 1) {
 				if (this.history[i] === uri) {
-					history.go(i - this.current)
+					window.history.go(i - this.current)
+					// this.backward(this.history[this.current], uri, i)
 					break
 				}
 			}
@@ -146,7 +216,8 @@ export default class History {
 		else {
 			for (let i = this.current - 1; i >= 0; i -= 1) {
 				if (this.history[i] === uri) {
-					history.go(i - this.current)
+					window.history.go(i - this.current)
+					// this.backward(this.history[this.current], uri, i)
 					break
 				}
 			}
@@ -170,6 +241,35 @@ export default class History {
 			window.history.replaceState(window.history.state, '', `#${uri}`)
 		}
 		this.cacheHistory()
+	}
+
+	savePath = () => {
+		return { current: this.current, history: this.history }
+	}
+
+	beginPath = () => {
+		this.recoding = true
+		this.path = [{ uri: this.history[this.current], index: this.current }]
+	}
+
+	endPath = () => {
+		this.recoding = false
+		const current = this.path[0]
+		const end = this.path.slice(-1)[0]
+		if (current.index < end.index) {
+			this.emitRouteChange({
+				current: [{ uri: current.uri, className: 'current', index: current.index }, { uri: end.uri, className: 'next', index: end.index }],
+				next: [{ uri: current.uri, className: 'prev', index: current.index }, { uri: end.uri, className: 'current', index: end.index }],
+				end: [{ uri: end.uri, className: 'current', index: end.index }]
+			})
+		}
+		else {
+			this.emitRouteChange({
+				current: [{ uri: end.uri, className: 'prev', index: end.index }, { uri: current.uri, className: 'current', index: current.index }],
+				next: [{ uri: end.uri, className: 'current', index: end.index }, { uri: current.uri, className: 'next', index: current.index }],
+				end: [{ uri: end.uri, className: 'current', index: end.index }]
+			})
+		}
 	}
 
 	restoreHistory = () => {

@@ -32,7 +32,20 @@ export default class Link extends React.Component {
 		ev.persist()
 		const goon = await this.props.onClick(ev)
 		if (goon !== false && !ev.isDefaultPrevented()) {
-			history.navigateTo(this.props.to)
+			const { to, back, replace, path } = this.props
+			if (to) {
+				history.navigateTo(to)
+			}
+			else if (back) {
+				history.backTo(back)
+			}
+			else if (replace) {
+				history.replaceWith(replace)
+			}
+			else if (path) {
+				history.loads(path)
+			}
+			// history.navigateTo(this.props.to)
 		}
 	}
 

@@ -55,8 +55,10 @@ var Container = function (_React$Component) {
 
 		return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = Container.__proto__ || Object.getPrototypeOf(Container)).call.apply(_ref, [this].concat(args))), _this), _this.shouldComponentUpdate = function (nextProps) {
 			if (JSON.stringify(nextProps.context) === JSON.stringify(_this.props.context) && nextProps.component === _this.props.component) {
-				if (nextProps.className !== _this.props.className) {
-					_this.container.className = 'route ' + nextProps.className;
+				if (nextProps.style.transform !== _this.props.style.transform) {
+					Object.keys(nextProps.style).forEach(function (name) {
+						_this.container.style[name] = nextProps.style[name];
+					});
 				}
 				return false;
 			}
@@ -70,7 +72,7 @@ var Container = function (_React$Component) {
 			var _this2 = this;
 
 			var _props = this.props,
-			    className = _props.className,
+			    style = _props.style,
 			    context = _props.context,
 			    component = _props.component;
 
@@ -79,15 +81,18 @@ var Container = function (_React$Component) {
 			return _react2.default.createElement(
 				'div',
 				{
-					className: 'route ' + className,
+					style: style,
 					'data-uri': context.uri,
-					ref: function ref(_ref2) {
-						_this2.container = _ref2;
+					ref: function ref(_ref3) {
+						_this2.container = _ref3;
 					}
 				},
 				_react2.default.createElement(Component, {
 					context: _extends({}, context, { observer: _h.observer, navigateTo: _h.history.navigateTo, backTo: _h.history.backTo, replaceWith: _h.history.replaceWith }),
-					key: context.uri
+					key: context.uri,
+					ref: function ref(_ref2) {
+						_this2.component = _ref2;
+					}
 				})
 			);
 		}
@@ -98,11 +103,9 @@ var Container = function (_React$Component) {
 
 Container.propTypes = {
 	component: _propTypes2.default.func.isRequired,
-	context: _propTypes2.default.shape(),
-	className: _propTypes2.default.string
+	context: _propTypes2.default.shape()
 };
 Container.defaultProps = {
-	context: {},
-	className: ''
+	context: {}
 };
 exports.Container = Container;

@@ -31,9 +31,12 @@ export default class Router extends React.Component {
 			current: [],
 			next: [],
 			end: [],
+			transition: 0,
 		}
 		this.routes = []
 		this.pages = {}
+		this.playback = []
+		this.emiting = false
 
 		this.parseRoutes(props.children, props.path || '')
 	}
@@ -45,25 +48,38 @@ export default class Router extends React.Component {
 					this.parseRoute(item.uri)
 				}
 			}))
-			this.setState(routes)
+			this.playback.push(routes)
+			if (!this.emiting) {
+				this.emit()
+			}
 		})
 
 		history.init()
 	}
 
-	componentDidUpdate() {
-		if (this.props.duration > 0) {
-			this.animated()
+	emit = () => {
+		this.emiting = true
+		if (this.playback.length === 0) {
+			this.emiting = false
+			return
 		}
-	}
 
-	animated = () => {
-		const { next, end } = this.state
-		if (next.length > 0) {
-			const timeout = next.length > 1 ? this.props.delay : this.props.duration
+		const { current, next, end } = this.playback[0]
+		this.playback = this.playback.slice(1)
+		const { duration, delay } = this.props
+		if (duration > 0) {
+			this.setState({ current, transition: 0 })
 			setTimeout(() => {
-				this.setState({ current: next, next: end, end: [] })
-			}, timeout)
+				this.setState({ current: next, transition: duration })
+				setTimeout(() => {
+					this.setState({ current: end, transition: delay }, () => {
+						setTimeout(() => this.emit(), delay)
+					})
+				}, duration)
+			}, delay)
+		}
+		else {
+			this.setState({ current: end, transition: 0 }, () => this.emit())
 		}
 	}
 
@@ -75,7 +91,7 @@ export default class Router extends React.Component {
 				const variables = []
 				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
 					variables.push(m.slice(1))
-					return '([a-zA-Z0-9]+)'
+					return '([a-zA-Z0-9\-_]+)'
 				})
 				this.routes.push({
 					Type: Container,
@@ -92,7 +108,7 @@ export default class Router extends React.Component {
 				const variables = []
 				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
 					variables.push(m.slice(1))
-					return '([a-zA-Z0-9]+)'
+					return '([a-zA-Z0-9\-_]+)'
 				})
 				this.routes.push({
 					Type: r.type,
@@ -125,7 +141,7 @@ export default class Router extends React.Component {
 			if (found) {
 				return
 			}
-			const { Type, component, path, rule, variables, props } = route
+			const { Type, component, path, rule, variables, props, mount, unmount, cache } = route
 			const matches = pathname.match(rule)
 			if ((path === pathname) || matches) {
 				const match = {}
@@ -144,7 +160,10 @@ export default class Router extends React.Component {
 						query,
 						match,
 						args,
-					}
+					},
+					mount,
+					unmount,
+					cache,
 				}
 				this.pages[uri] = page
 				found = true
@@ -162,6 +181,9 @@ export default class Router extends React.Component {
 					match: {},
 					args,
 				},
+				mount: () => {},
+				unmount: () => {},
+				cache: false,
 			}
 			this.pages[uri] = page
 		}
@@ -215,14 +237,23 @@ export default class Router extends React.Component {
 	}
 
 	render() {
-		return <div className="router">
+		return <div style={{ position: 'relative', overflowX: 'hidden', width: '100%', height: '100%' }}>
 			{
-				(this.props.duration > 0 ? this.state.current : this.state.end).map(item => {
+				this.state.current.map(item => {
 					const { uri, className, index } = item
-					const { Type, component, context, props } = this.pages[uri]
+					const pos = { 'prev': '0', 'current': '0', 'next': '100' }[className]
+					const style = {
+						position: 'absolute',
+						zIndex: index + 1,
+						width: '100%',
+						height: '100%',
+						transition: `transform ease ${this.state.transition}ms`,
+						transform: `translate(${pos}%, 0) translateZ(0)`,
+					}
+					const { Type, component, context, props, mount, unmount, cache } = this.pages[uri]
 					return <Type
 						context={{ index, ...context, props }}
-						className={className}
+						style={style}
 						component={component}
 						key={uri}
 					/>

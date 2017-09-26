@@ -37,7 +37,7 @@ export default class Redirect extends React.Component {
 	}
 
 	render() {
-		return <div>redirect to: {this.redirectURI}</div>
+		return <div className="route">redirect to: {this.redirectURI}</div>
 	}
 }
 
