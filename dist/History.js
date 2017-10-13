@@ -68,7 +68,7 @@ var History = function History(observer) {
 		_this.emitRouteChange({
 			current: [{ uri: newURI, className: 'current', index: _this.current }],
 			next: [],
-			end: []
+			end: [{ uri: newURI, className: 'current', index: _this.current }]
 		});
 		_this.cacheHistory();
 	};
@@ -230,7 +230,7 @@ var History = function History(observer) {
 		_this.emitRouteChange({
 			current: [{ uri: uri, className: 'current', index: _this.current }],
 			next: [],
-			end: []
+			end: [{ uri: uri, className: 'current', index: _this.current }]
 		});
 		// 安全问题
 		if (/^[a-z]+:\/\//i.test(uri)) {
