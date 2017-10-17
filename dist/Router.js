@@ -70,11 +70,13 @@ var Router = function (_React$Component) {
 
 			_h.observer.subscribe('ROUTER_CHANGE', function (routes) {
 				Object.keys(routes).forEach(function (step) {
-					return routes[step].forEach(function (item) {
-						if (!(item.uri in _this2.pages)) {
-							_this2.parseRoute(item.uri);
-						}
-					});
+					if (step !== 'direct') {
+						routes[step].forEach(function (item) {
+							if (!(item.uri in _this2.pages)) {
+								_this2.parseRoute(item.uri);
+							}
+						});
+					}
 				});
 				_this2.playback.push(routes);
 				if (!_this2.emiting) {
@@ -158,14 +160,21 @@ var _initialiseProps = function _initialiseProps() {
 		var _playback$ = _this4.playback[0],
 		    current = _playback$.current,
 		    next = _playback$.next,
-		    end = _playback$.end;
+		    end = _playback$.end,
+		    direct = _playback$.direct;
 
 		_this4.playback = _this4.playback.slice(1);
 		var _props = _this4.props,
 		    duration = _props.duration,
 		    delay = _props.delay;
 
-		if (duration > 0) {
+		if (direct === true || duration <= 0) {
+			console.log('direct');
+			_this4.setState({ current: end, transition: 0 }, function () {
+				return _this4.emit();
+			});
+		} else {
+			console.log('animate');
 			_this4.setState({ current: current, transition: 0 });
 			setTimeout(function () {
 				_this4.setState({ current: next, transition: duration });
@@ -177,10 +186,6 @@ var _initialiseProps = function _initialiseProps() {
 					});
 				}, duration);
 			}, delay);
-		} else {
-			_this4.setState({ current: end, transition: 0 }, function () {
-				return _this4.emit();
-			});
 		}
 	};
 

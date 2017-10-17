@@ -43,11 +43,15 @@ export default class Router extends React.Component {
 
 	componentWillMount() {
 		observer.subscribe('ROUTER_CHANGE', routes => {
-			Object.keys(routes).forEach(step => routes[step].forEach(item => {
-				if (!(item.uri in this.pages)) {
-					this.parseRoute(item.uri)
+			Object.keys(routes).forEach(step => {
+				if (step !== 'direct') {
+					routes[step].forEach(item => {
+						if (!(item.uri in this.pages)) {
+							this.parseRoute(item.uri)
+						}
+					})
 				}
-			}))
+			})
 			this.playback.push(routes)
 			if (!this.emiting) {
 				this.emit()
@@ -64,10 +68,15 @@ export default class Router extends React.Component {
 			return
 		}
 
-		const { current, next, end } = this.playback[0]
+		const { current, next, end, direct } = this.playback[0]
 		this.playback = this.playback.slice(1)
 		const { duration, delay } = this.props
-		if (duration > 0) {
+		if (direct === true || duration <= 0) {
+			console.log('direct')
+			this.setState({ current: end, transition: 0 }, () => this.emit())
+		}
+		else {
+			console.log('animate')
 			this.setState({ current, transition: 0 })
 			setTimeout(() => {
 				this.setState({ current: next, transition: duration })
@@ -77,9 +86,6 @@ export default class Router extends React.Component {
 					})
 				}, duration)
 			}, delay)
-		}
-		else {
-			this.setState({ current: end, transition: 0 }, () => this.emit())
 		}
 	}
 

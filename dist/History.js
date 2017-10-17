@@ -208,19 +208,18 @@ var History = function History(observer) {
 			for (var i = 0; i < _this.current; i += 1) {
 				if (_this.history[i] === uri) {
 					window.history.go(i - _this.current);
-					// this.backward(this.history[this.current], uri, i)
-					break;
+					return true;
 				}
 			}
 		} else {
 			for (var _i = _this.current - 1; _i >= 0; _i -= 1) {
 				if (_this.history[_i] === uri) {
 					window.history.go(_i - _this.current);
-					// this.backward(this.history[this.current], uri, i)
-					break;
+					return true;
 				}
 			}
 		}
+		return false;
 	};
 
 	this.replaceWith = function (to) {
@@ -230,7 +229,8 @@ var History = function History(observer) {
 		_this.emitRouteChange({
 			current: [{ uri: uri, className: 'current', index: _this.current }],
 			next: [],
-			end: [{ uri: uri, className: 'current', index: _this.current }]
+			end: [{ uri: uri, className: 'current', index: _this.current }],
+			direct: true
 		});
 		// 安全问题
 		if (/^[a-z]+:\/\//i.test(uri)) {

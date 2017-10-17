@@ -78,7 +78,7 @@ export default class History {
 		this.emitRouteChange({
 			current: [{ uri: newURI, className: 'current', index: this.current }],
 			next: [],
-			end: [],
+			end: [{ uri: newURI, className: 'current', index: this.current }],
 		})
 		this.cacheHistory()
 	}
@@ -208,8 +208,7 @@ export default class History {
 			for (let i = 0; i < this.current; i += 1) {
 				if (this.history[i] === uri) {
 					window.history.go(i - this.current)
-					// this.backward(this.history[this.current], uri, i)
-					break
+					return true
 				}
 			}
 		}
@@ -217,11 +216,11 @@ export default class History {
 			for (let i = this.current - 1; i >= 0; i -= 1) {
 				if (this.history[i] === uri) {
 					window.history.go(i - this.current)
-					// this.backward(this.history[this.current], uri, i)
-					break
+					return true
 				}
 			}
 		}
+		return false
 	}
 
 	replaceWith = to => {
@@ -231,7 +230,8 @@ export default class History {
 		this.emitRouteChange({
 			current: [{ uri, className: 'current', index: this.current }],
 			next: [],
-			end: [],
+			end: [{ uri, className: 'current', index: this.current }],
+			direct: true
 		})
 		// 安全问题
 		if (/^[a-z]+:\/\//i.test(uri)) {
