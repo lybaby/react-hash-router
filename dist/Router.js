@@ -91,9 +91,16 @@ var Router = function (_React$Component) {
 		value: function render() {
 			var _this3 = this;
 
+			var styles = {
+				position: 'absolute',
+				overflowX: 'hidden',
+				width: '100%',
+				height: '100%'
+			};
+
 			return _react2.default.createElement(
 				'div',
-				{ style: { position: 'relative', overflowX: 'hidden', width: '100%', height: '100%' } },
+				{ style: styles },
 				this.state.current.map(function (item) {
 					var uri = item.uri,
 					    className = item.className,
@@ -169,12 +176,10 @@ var _initialiseProps = function _initialiseProps() {
 		    delay = _props.delay;
 
 		if (direct === true || duration <= 0) {
-			console.log('direct');
 			_this4.setState({ current: end, transition: 0 }, function () {
 				return _this4.emit();
 			});
 		} else {
-			console.log('animate');
 			_this4.setState({ current: current, transition: 0 });
 			setTimeout(function () {
 				_this4.setState({ current: next, transition: duration });

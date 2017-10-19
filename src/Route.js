@@ -14,7 +14,7 @@ Route.propTypes = {
 export default Route
 
 // route container
-class Container extends React.Component {
+export class Container extends React.Component {
 	static propTypes = {
 		component: PropTypes.func.isRequired,
 		context: PropTypes.shape(),
@@ -55,5 +55,3 @@ class Container extends React.Component {
 		</div>
 	}
 }
-
-export { Container }

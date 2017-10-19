@@ -39,7 +39,7 @@ exports.default = Route;
 
 // route container
 
-var Container = function (_React$Component) {
+var Container = exports.Container = function (_React$Component) {
 	_inherits(Container, _React$Component);
 
 	function Container() {
@@ -108,4 +108,3 @@ Container.propTypes = {
 Container.defaultProps = {
 	context: {}
 };
-exports.Container = Container;

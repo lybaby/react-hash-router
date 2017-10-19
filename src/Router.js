@@ -72,11 +72,9 @@ export default class Router extends React.Component {
 		this.playback = this.playback.slice(1)
 		const { duration, delay } = this.props
 		if (direct === true || duration <= 0) {
-			console.log('direct')
 			this.setState({ current: end, transition: 0 }, () => this.emit())
 		}
 		else {
-			console.log('animate')
 			this.setState({ current, transition: 0 })
 			setTimeout(() => {
 				this.setState({ current: next, transition: duration })
@@ -243,7 +241,14 @@ export default class Router extends React.Component {
 	}
 
 	render() {
-		return <div style={{ position: 'relative', overflowX: 'hidden', width: '100%', height: '100%' }}>
+		const styles = {
+			position: 'absolute',
+			overflowX: 'hidden',
+			width: '100%',
+			height: '100%'
+		}
+
+		return <div style={styles}>
 			{
 				this.state.current.map(item => {
 					const { uri, className, index } = item
