@@ -127,7 +127,7 @@ export default class Router extends React.Component {
 				})
 			}
 			else if (r.type === Router) {
-				this.parseRoutes(r.props.children, `${prefix}${result.props.path || ''}`)
+				this.parseRoutes(r.props.children, `${prefix}${r.props.path || ''}`)
 			}
 			else if (typeof r.type === 'function') {
 				const result = r.type()

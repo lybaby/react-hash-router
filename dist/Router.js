@@ -238,7 +238,7 @@ var _initialiseProps = function _initialiseProps() {
 					}
 				});
 			} else if (r.type === Router) {
-				_this4.parseRoutes(r.props.children, '' + prefix + (result.props.path || ''));
+				_this4.parseRoutes(r.props.children, '' + prefix + (r.props.path || ''));
 			} else if (typeof r.type === 'function') {
 				var _result = r.type();
 				if (_result && _result.type === Router) {
