@@ -50,7 +50,6 @@ export class Container extends React.Component {
 			<Component
 				context={{ ...context, observer, navigateTo: history.navigateTo, backTo: history.backTo, replaceWith: history.replaceWith }}
 				key={context.uri}
-				ref={ref => { this.component = ref }}
 			/>
 		</div>
 	}

@@ -83,16 +83,13 @@ var Container = exports.Container = function (_React$Component) {
 				{
 					style: style,
 					'data-uri': context.uri,
-					ref: function ref(_ref3) {
-						_this2.container = _ref3;
+					ref: function ref(_ref2) {
+						_this2.container = _ref2;
 					}
 				},
 				_react2.default.createElement(Component, {
 					context: _extends({}, context, { observer: _h.observer, navigateTo: _h.history.navigateTo, backTo: _h.history.backTo, replaceWith: _h.history.replaceWith }),
-					key: context.uri,
-					ref: function ref(_ref2) {
-						_this2.component = _ref2;
-					}
+					key: context.uri
 				})
 			);
 		}
