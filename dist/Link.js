@@ -1,26 +1,6 @@
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _regenerator = require('babel-runtime/regenerator');
-
-var _regenerator2 = _interopRequireDefault(_regenerator);
+import _regeneratorRuntime from 'babel-runtime/regenerator';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = require('react');
-
-var _react2 = _interopRequireDefault(_react);
-
-var _propTypes = require('prop-types');
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-var _h = require('./h');
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
@@ -29,6 +9,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+import React from 'react';
+import PropTypes from 'prop-types';
+
+import { history } from './h';
 
 var Link = function (_React$Component) {
 	_inherits(Link, _React$Component);
@@ -48,10 +33,10 @@ var Link = function (_React$Component) {
 		return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = Link.__proto__ || Object.getPrototypeOf(Link)).call.apply(_ref, [this].concat(args))), _this), _this.click = function () {
 			_this.link.click();
 		}, _this.handleClick = function () {
-			var _ref2 = _asyncToGenerator( /*#__PURE__*/_regenerator2.default.mark(function _callee(ev) {
+			var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(ev) {
 				var goon, _this$props, to, back, replace, path;
 
-				return _regenerator2.default.wrap(function _callee$(_context) {
+				return _regeneratorRuntime.wrap(function _callee$(_context) {
 					while (1) {
 						switch (_context.prev = _context.next) {
 							case 0:
@@ -66,13 +51,13 @@ var Link = function (_React$Component) {
 									_this$props = _this.props, to = _this$props.to, back = _this$props.back, replace = _this$props.replace, path = _this$props.path;
 
 									if (to) {
-										_h.history.navigateTo(to);
+										history.navigateTo(to);
 									} else if (back) {
-										_h.history.backTo(back);
+										history.backTo(back);
 									} else if (replace) {
-										_h.history.replaceWith(replace);
+										history.replaceWith(replace);
 									} else if (path) {
-										_h.history.loads(path);
+										history.loads(path);
 									}
 									// history.navigateTo(this.props.to)
 								}
@@ -104,7 +89,7 @@ var Link = function (_React$Component) {
 			    children = _props.children;
 
 
-			return _react2.default.createElement(
+			return React.createElement(
 				'a',
 				{
 					id: id,
@@ -122,16 +107,16 @@ var Link = function (_React$Component) {
 	}]);
 
 	return Link;
-}(_react2.default.Component);
+}(React.Component);
 
 Link.propTypes = {
-	id: _propTypes2.default.string,
-	title: _propTypes2.default.string,
-	to: _propTypes2.default.string,
-	className: _propTypes2.default.string,
-	style: _propTypes2.default.shape(),
-	children: _propTypes2.default.node,
-	onClick: _propTypes2.default.func
+	id: PropTypes.string,
+	title: PropTypes.string,
+	to: PropTypes.string,
+	className: PropTypes.string,
+	style: PropTypes.shape(),
+	children: PropTypes.node,
+	onClick: PropTypes.func
 };
 Link.defaultProps = {
 	id: null,
@@ -139,7 +124,7 @@ Link.defaultProps = {
 	to: '',
 	className: '',
 	style: {},
-	children: _propTypes2.default.node,
+	children: PropTypes.node,
 	onClick: function onClick() {}
 };
-exports.default = Link;
+export default Link;

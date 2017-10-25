@@ -1,25 +1,6 @@
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-exports.Container = undefined;
-
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = require('react');
-
-var _react2 = _interopRequireDefault(_react);
-
-var _propTypes = require('prop-types');
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-var _h = require('./h');
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -27,19 +8,23 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+import React from 'react';
+import PropTypes from 'prop-types';
+
+import { observer, history } from './h';
+
 // route
 var Route = function Route() {};
 
 Route.propTypes = {
-	path: _propTypes2.default.string.isRequired,
-	component: _propTypes2.default.func.isRequired
+	path: PropTypes.string.isRequired,
+	component: PropTypes.func.isRequired
 };
 
-exports.default = Route;
+export default Route;
 
 // route container
-
-var Container = exports.Container = function (_React$Component) {
+export var Container = function (_React$Component) {
 	_inherits(Container, _React$Component);
 
 	function Container() {
@@ -78,7 +63,7 @@ var Container = exports.Container = function (_React$Component) {
 
 			var Component = component;
 
-			return _react2.default.createElement(
+			return React.createElement(
 				'div',
 				{
 					style: style,
@@ -87,8 +72,8 @@ var Container = exports.Container = function (_React$Component) {
 						_this2.container = _ref2;
 					}
 				},
-				_react2.default.createElement(Component, {
-					context: _extends({}, context, { observer: _h.observer, navigateTo: _h.history.navigateTo, backTo: _h.history.backTo, replaceWith: _h.history.replaceWith }),
+				React.createElement(Component, {
+					context: _extends({}, context, { observer: observer, navigateTo: history.navigateTo, backTo: history.backTo, replaceWith: history.replaceWith }),
 					key: context.uri
 				})
 			);
@@ -96,11 +81,10 @@ var Container = exports.Container = function (_React$Component) {
 	}]);
 
 	return Container;
-}(_react2.default.Component);
-
+}(React.Component);
 Container.propTypes = {
-	component: _propTypes2.default.func.isRequired,
-	context: _propTypes2.default.shape()
+	component: PropTypes.func.isRequired,
+	context: PropTypes.shape()
 };
 Container.defaultProps = {
 	context: {}

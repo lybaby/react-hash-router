@@ -1,29 +1,19 @@
-'use strict';
+import React from 'react';
 
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _react = require('react');
-
-var _react2 = _interopRequireDefault(_react);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = function (props) {
-	return _react2.default.createElement(
+export default (function (props) {
+	return React.createElement(
 		'div',
 		null,
-		_react2.default.createElement(
+		React.createElement(
 			'p',
 			null,
 			'Page Not Found'
 		),
-		_react2.default.createElement('hr', null),
-		_react2.default.createElement(
+		React.createElement('hr', null),
+		React.createElement(
 			'p',
 			null,
 			props.uri
 		)
 	);
-};
+});
