@@ -255,7 +255,7 @@ export default class Router extends React.Component {
 					const pos = { 'prev': '0', 'current': '0', 'next': '100' }[className]
 					const style = {
 						position: 'absolute',
-						zIndex: index + 1,
+						// zIndex: index + 1,
 						width: '100%',
 						height: '100%',
 						transition: `transform ease ${this.state.transition}ms`,
