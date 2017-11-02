@@ -191,13 +191,11 @@ export default class History {
 				window.open(to, '_self')
 			}
 			else {
-				// const oldURI = this.history[this.current]
-				// const newURI = this.buildURI(to)
-				// window.history.pushState({ PAGE: this.current + 1 }, "", `#${newURI}`)
-				// this.push(oldURI, newURI, true)
-				window.location.hash = this.buildURI(to)
-				// window.history.pushState({PAGE: this.current + 1}, "", `#${this.buildURI(to)}`)
-				// history.hashChange({ oldURL: window.location.href, newURL: window.location.href })
+				const oldURI = this.history[this.current]
+				const newURI = this.buildURI(to)
+				window.history.pushState({ PAGE: this.current + 1 }, "", `#${newURI}`)
+				this.push(oldURI, newURI, this.current + 1)
+				// window.location.hash = this.buildURI(to)
 			}
 		}
 	}

@@ -183,13 +183,11 @@ var History = function History(observer) {
 			if (/^(mailto|tel):/i.test(to) || /^([a-z]+:)?\/\//i.test(to)) {
 				window.open(to, '_self');
 			} else {
-				// const oldURI = this.history[this.current]
-				// const newURI = this.buildURI(to)
-				// window.history.pushState({ PAGE: this.current + 1 }, "", `#${newURI}`)
-				// this.push(oldURI, newURI, true)
-				window.location.hash = _this.buildURI(to);
-				// window.history.pushState({PAGE: this.current + 1}, "", `#${this.buildURI(to)}`)
-				// history.hashChange({ oldURL: window.location.href, newURL: window.location.href })
+				var oldURI = _this.history[_this.current];
+				var newURI = _this.buildURI(to);
+				window.history.pushState({ PAGE: _this.current + 1 }, "", '#' + newURI);
+				_this.push(oldURI, newURI, _this.current + 1);
+				// window.location.hash = this.buildURI(to)
 			}
 		}
 	};
