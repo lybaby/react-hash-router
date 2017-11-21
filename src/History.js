@@ -271,7 +271,8 @@ export default class History {
 	}
 
 	restoreHistory = () => {
-		const cache = JSON.parse(sessionStorage.getItem('history') || 'null')
+		const key = (location + '').split('#')[0]
+		const cache = JSON.parse(sessionStorage.getItem(key) || 'null')
 		if (cache && ('current' in cache) && ('history' in cache)) {
 			this.history = cache.history
 			this.current = cache.current
@@ -279,7 +280,8 @@ export default class History {
 	}
 
 	cacheHistory = () => {
+		const key = (location + '').split('#')[0]
 		const cache = JSON.stringify({ current: this.current, history: this.history })
-		sessionStorage.setItem('history', cache)
+		sessionStorage.setItem(key, cache)
 	}
 }
