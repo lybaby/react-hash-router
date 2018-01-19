@@ -93,9 +93,9 @@ export default class Router extends React.Component {
 			if (r.type === Route) {
 				const { component } = r.props
 				const variables = []
-				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
+				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9][.]*/g, m => {
 					variables.push(m.slice(1))
-					return '([a-zA-Z0-9\-_]+)'
+					return '([a-zA-Z0-9.\-_]+)'
 				})
 				this.routes.push({
 					Type: Container,
@@ -110,9 +110,9 @@ export default class Router extends React.Component {
 			else if (r.type === Redirect) {
 				const { to, replace } = r.props
 				const variables = []
-				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, m => {
+				const rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9][.]*/g, m => {
 					variables.push(m.slice(1))
-					return '([a-zA-Z0-9\-_]+)'
+					return '([a-zA-Z0-9.\-_]+)'
 				})
 				this.routes.push({
 					Type: r.type,
@@ -255,7 +255,6 @@ export default class Router extends React.Component {
 					const pos = { 'prev': '0', 'current': '0', 'next': '100' }[className]
 					const style = {
 						position: 'absolute',
-						// zIndex: index + 1,
 						width: '100%',
 						height: '100%',
 						transition: `transform ease ${this.state.transition}ms`,
