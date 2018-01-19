@@ -1,21 +1,42 @@
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = require('prop-types');
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _NotFound = require('./NotFound');
+
+var _NotFound2 = _interopRequireDefault(_NotFound);
+
+var _Route = require('./Route');
+
+var _Route2 = _interopRequireDefault(_Route);
+
+var _Redirect = require('./Redirect');
+
+var _Redirect2 = _interopRequireDefault(_Redirect);
+
+var _h = require('./h');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-import React from 'react';
-import PropTypes from 'prop-types';
-
-import NotFound from './NotFound';
-import Route, { Container } from './Route';
-import Redirect from './Redirect';
-
-import { observer, history } from './h';
 
 var Router = function (_React$Component) {
 	_inherits(Router, _React$Component);
@@ -47,7 +68,7 @@ var Router = function (_React$Component) {
 		value: function componentWillMount() {
 			var _this2 = this;
 
-			observer.subscribe('ROUTER_CHANGE', function (routes) {
+			_h.observer.subscribe('ROUTER_CHANGE', function (routes) {
 				Object.keys(routes).forEach(function (step) {
 					if (step !== 'direct') {
 						routes[step].forEach(function (item) {
@@ -63,7 +84,7 @@ var Router = function (_React$Component) {
 				}
 			});
 
-			history.init();
+			_h.history.init();
 		}
 	}, {
 		key: 'render',
@@ -77,7 +98,7 @@ var Router = function (_React$Component) {
 				height: '100%'
 			};
 
-			return React.createElement(
+			return _react2.default.createElement(
 				'div',
 				{ style: styles },
 				this.state.current.map(function (item) {
@@ -88,7 +109,6 @@ var Router = function (_React$Component) {
 					var pos = { 'prev': '0', 'current': '0', 'next': '100' }[className];
 					var style = {
 						position: 'absolute',
-						// zIndex: index + 1,
 						width: '100%',
 						height: '100%',
 						transition: 'transform ease ' + _this3.state.transition + 'ms',
@@ -103,7 +123,7 @@ var Router = function (_React$Component) {
 					    unmount = _pages$uri.unmount,
 					    cache = _pages$uri.cache;
 
-					return React.createElement(Type, {
+					return _react2.default.createElement(Type, {
 						context: _extends({ index: index }, context, { props: props }),
 						style: style,
 						component: component,
@@ -115,20 +135,20 @@ var Router = function (_React$Component) {
 	}]);
 
 	return Router;
-}(React.Component);
+}(_react2.default.Component);
 
 Router.propTypes = {
-	path: PropTypes.string,
-	children: PropTypes.arrayOf(Route, Router, Redirect, PropTypes.func).isRequired,
-	cache: PropTypes.bool,
-	notFound: PropTypes.func,
-	duration: PropTypes.number,
-	delay: PropTypes.number
+	path: _propTypes2.default.string,
+	children: _propTypes2.default.arrayOf(_Route2.default, Router, _Redirect2.default, _propTypes2.default.func).isRequired,
+	cache: _propTypes2.default.bool,
+	notFound: _propTypes2.default.func,
+	duration: _propTypes2.default.number,
+	delay: _propTypes2.default.number
 };
 Router.defaultProps = {
 	path: '',
 	cache: false,
-	notFound: NotFound,
+	notFound: _NotFound2.default,
 	duration: 400,
 	delay: 16
 };
@@ -178,16 +198,16 @@ var _initialiseProps = function _initialiseProps() {
 
 		routes.forEach(function (r) {
 			var p = ('' + prefix + (r.props.path || '')).replace(/\/{2,}/g, '/');
-			if (r.type === Route) {
+			if (r.type === _Route2.default) {
 				var component = r.props.component;
 
 				var variables = [];
-				var rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
+				var rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9][.]*/g, function (m) {
 					variables.push(m.slice(1));
-					return '([a-zA-Z0-9\-_]+)';
+					return '([a-zA-Z0-9.\-_]+)';
 				});
 				_this4.routes.push({
-					Type: Container,
+					Type: _Route.Container,
 					component: component,
 					rule: new RegExp('^' + rule + '$'),
 					variables: variables,
@@ -195,15 +215,15 @@ var _initialiseProps = function _initialiseProps() {
 						path: p
 					}
 				});
-			} else if (r.type === Redirect) {
+			} else if (r.type === _Redirect2.default) {
 				var _r$props = r.props,
 				    to = _r$props.to,
 				    replace = _r$props.replace;
 
 				var _variables = [];
-				var _rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
+				var _rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9][.]*/g, function (m) {
 					_variables.push(m.slice(1));
-					return '([a-zA-Z0-9\-_]+)';
+					return '([a-zA-Z0-9.\-_]+)';
 				});
 				_this4.routes.push({
 					Type: r.type,
@@ -278,7 +298,7 @@ var _initialiseProps = function _initialiseProps() {
 		});
 		if (!found) {
 			var page = {
-				Type: Container,
+				Type: _Route.Container,
 				component: _this4.props.notFound,
 				props: {},
 				context: {
@@ -338,4 +358,4 @@ var _initialiseProps = function _initialiseProps() {
 	};
 };
 
-export default Router;
+exports.default = Router;
