@@ -202,7 +202,7 @@ var _initialiseProps = function _initialiseProps() {
 				var component = r.props.component;
 
 				var variables = [];
-				var rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9][.]*/g, function (m) {
+				var rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
 					variables.push(m.slice(1));
 					return '([a-zA-Z0-9.\-_]+)';
 				});
@@ -221,7 +221,7 @@ var _initialiseProps = function _initialiseProps() {
 				    replace = _r$props.replace;
 
 				var _variables = [];
-				var _rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9][.]*/g, function (m) {
+				var _rule = p.replace(/\//g, '\\/').replace(/:[a-zA-Z][a-zA-Z0-9]*/g, function (m) {
 					_variables.push(m.slice(1));
 					return '([a-zA-Z0-9.\-_]+)';
 				});
